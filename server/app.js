@@ -4,6 +4,7 @@ import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import devRoutes from "./routes/devRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
+import BudgetPlan from "./routes/budgetRoutes.js";
 
 const app = express();
 
@@ -22,8 +23,9 @@ app.use("/dev", devRoutes);
 
 // Transactions (CRUD)
 app.use("/transactions", transactionRoutes);
+app.use("/budget", BudgetPlan);
 
-// 404 fallback – ALLTID SIST
+// 404 fallback 
 app.use((req, res) => {
   res.status(404).json({
     error: "NotFound",
