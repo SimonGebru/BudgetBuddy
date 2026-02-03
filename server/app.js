@@ -5,6 +5,7 @@ import authRoutes from "./routes/authRoutes.js";
 import devRoutes from "./routes/devRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
 import BudgetPlan from "./routes/budgetRoutes.js";
+import householdRoutes from "./routes/householdRoutes.js";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use("/dev", devRoutes);
 // Transactions (CRUD)
 app.use("/transactions", transactionRoutes);
 app.use("/budget", BudgetPlan);
+app.use("/household", householdRoutes);
 
 // 404 fallback 
 app.use((req, res) => {
