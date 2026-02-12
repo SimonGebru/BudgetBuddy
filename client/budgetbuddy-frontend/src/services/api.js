@@ -27,3 +27,23 @@ export async function register(name, email, password) {
   localStorage.setItem("bb_user", JSON.stringify(user));
   return user;
 }
+
+export async function getBudgetSummary(month) {
+  await wait(400);
+
+  // Minimal "budget shape" som Dashboard förväntar sig
+  return {
+    month,
+    split: "income", // eller "equal"
+    categories: [
+      { id: "cat_1", name: "Rent", planned: 12000 },
+      { id: "cat_2", name: "Food", planned: 4500 },
+      { id: "cat_3", name: "Savings", planned: 3000 },
+    ],
+  };
+}
+
+export async function updateSplitMode(month, split) {
+  await wait(200);
+  return { month, split };
+}

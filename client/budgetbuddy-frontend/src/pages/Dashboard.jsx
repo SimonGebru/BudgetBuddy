@@ -1,0 +1,126 @@
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Pencil } from 'lucide-react';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { MonthPicker } from '@/components/budget/MonthPicker';
+import { SummaryCards, SummaryCardsSkeleton } from '@/components/budget/SummaryCards';
+import { SplitModeSelector } from '@/components/budget/SplitModeSelector';
+import { CategoryCard, CategoryCardSkeleton } from '@/components/budget/CategoryCard';
+import { EmptyBudget } from '@/components/budget/EmptyBudget';
+import { Button } from '@/components/ui/button';
+import { getBudgetSummary, updateSplitMode } from '@/services/api';
+import { getCurrentMonth, mockCurrentUser } from '@/data/mockData';
+import { useToast } from '@/hooks/use-toast';
+
+export default function Dashboard() {
+  const { toast } = useToast();
+  const [month, setMonth] = useState(getCurrentMonth());
+  const [budget, setBudget] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadBudget();
+  }, [month]);
+
+  const loadBudget = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getBudgetSummary(month);
+      setBudget(data);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load budget data.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSplitChange = async (newSplit) => {
+    if (!budget) return;
+    
+    try {
+      const updated = await updateSplitMode(month, newSplit);
+      setBudget({ ...budget, split: newSplit });
+      // In real app, we'd recalculate the split from the backend response
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update split mode.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const hasBudget = budget && budget.categories.length > 0;
+
+  return (
+    <AppLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Dashboard</h1>
+        </div>
+
+        {/* Month Picker */}
+        <MonthPicker month={month} onChange={setMonth} />
+
+        {/* Loading State */}
+        {isLoading && (
+          <>
+            <SummaryCardsSkeleton />
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <CategoryCardSkeleton key={i} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Content */}
+        {!isLoading && budget && (
+          <>
+            {hasBudget ? (
+              <>
+                {/* Summary Cards */}
+                <SummaryCards budget={budget} currentUserId={mockCurrentUser.id} />
+
+                {/* Split Mode Selector */}
+                <SplitModeSelector split={budget.split} onChange={handleSplitChange} />
+
+                {/* Categories */}
+                <div>
+                  <h3 className="section-title">Budget Categories</h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+                    {budget.categories.map((category, index) => (
+                      <CategoryCard
+                        key={category.id}
+                        category={category}
+                        currentUserId={mockCurrentUser.id}
+                        index={index}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Edit Button */}
+                <div className="pt-2">
+                  <Button asChild variant="outline" size="lg" className="w-full">
+                    <Link to={`/budget/${month}/edit`}>
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit Budget Plan
+                    </Link>
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <EmptyBudget month={month} />
+            )}
+          </>
+        )}
+      </div>
+    </AppLayout>
+  );
+}
