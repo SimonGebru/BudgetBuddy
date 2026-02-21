@@ -10,6 +10,8 @@ import Register from "@/pages/Register";
 import NotFound from "@/pages/NotFound";
 import Dashboard from "@/pages/Dashboard";
 import Onboarding from "@/pages/Onboarding";
+import EditBudget from "@/pages/EditBudget";
+
 
 const queryClient = new QueryClient();
 
@@ -27,6 +29,7 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/budget/:month/edit" element={<EditBudget />} />
             
             <Route path="/" element={<Navigate to="/login" replace />} />
 
