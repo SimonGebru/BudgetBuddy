@@ -4,7 +4,7 @@ import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import devRoutes from "./routes/devRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
-import BudgetPlan from "./routes/budgetRoutes.js";
+import budgetRoutes from "./routes/budgetRoutes.js";
 import householdRoutes from "./routes/householdRoutes.js";
 
 const app = express();
@@ -18,13 +18,13 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-// Routes (API)
+// Routes 
 app.use("/auth", authRoutes);
 app.use("/dev", devRoutes);
 
-// Transactions (CRUD)
+// Transactions 
 app.use("/transactions", transactionRoutes);
-app.use("/budget", BudgetPlan);
+app.use("/budget", budgetRoutes);
 app.use("/household", householdRoutes);
 
 // 404 fallback 

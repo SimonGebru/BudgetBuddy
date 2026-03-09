@@ -99,3 +99,21 @@ export async function login(req, res) {
     res.status(500).json({ error: "ServerError", message: err.message });
   }
 }
+
+export async function me(req, res) {
+  try {
+    return res.status(200).json({
+      user: {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        householdId: req.user.householdId,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: "ServerError",
+      message: err.message,
+    });
+  }
+}
