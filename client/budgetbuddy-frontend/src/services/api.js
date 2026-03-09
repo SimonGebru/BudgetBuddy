@@ -1,121 +1,198 @@
+const BASE_URL = "http://localhost:8080";
 
+function getToken() {
+  return localStorage.getItem("token");
+}
 
-import {
-  mockCurrentUser,
-  mockBudgetSummary,
-  mockHousehold,
-  emptyBudgetSummary,
-} from '@/data/mockData';
+function setToken(token) {
+  localStorage.setItem("token", token);
+}
 
+function removeToken() {
+  localStorage.removeItem("token");
+}
 
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+function setStoredUser(user) {
+  localStorage.setItem("user", JSON.stringify(user));
+}
+
+function getStoredUser() {
+  const raw = localStorage.getItem("user");
+  return raw ? JSON.parse(raw) : null;
+}
+
+function removeStoredUser() {
+  localStorage.removeItem("user");
+}
+
+async function request(path, options = {}) {
+  const token = getToken();
+
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.message || "Something went wrong");
+  }
+
+  return data;
+}
 
 /**
- * AUTH ENDPOINTS
+ * AUTH
  */
-
 
 export async function login(email, password) {
-  await delay(800);
-  
-  if (email && password) {
-    return mockCurrentUser;
-  }
-  throw new Error('Invalid credentials');
-}
+  const data = await request("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
 
+  setToken(data.token);
+  setStoredUser(data.user);
+
+  return data.user;
+}
 
 export async function register(name, email, password) {
-  await delay(800);
-  
-  return { ...mockCurrentUser, name, email, householdId: undefined };
-}
+  const data = await request("/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ name, email, password }),
+  });
 
+  setToken(data.token);
+  setStoredUser(data.user);
+
+  return data.user;
+}
 
 export async function logout() {
-  await delay(300);
+  removeToken();
+  removeStoredUser();
 }
 
-
 export async function getCurrentUser() {
-  await delay(300);
-  
-  return mockCurrentUser;
+  const data = await request("/auth/me", {
+    method: "GET",
+  });
+
+  setStoredUser(data.user);
+  return data.user;
 }
 
 /**
- * HOUSEHOLD ENDPOINTS
+ * HOUSEHOLD
  */
 
-
 export async function createHousehold(name, monthlyIncome) {
-  await delay(800);
-  
+  const data = await request("/household/create", {
+    method: "POST",
+    body: JSON.stringify({ name, monthlyIncome }),
+  });
+
+  const currentUser = getStoredUser();
+  if (currentUser) {
+    const updatedUser = {
+      ...currentUser,
+      householdId: data.householdId,
+    };
+    setStoredUser(updatedUser);
+  }
+
   return {
-    id: 'new-household',
-    name,
-    members: [{ userId: mockCurrentUser.id, name: mockCurrentUser.name, monthlyIncome }],
+    id: data.householdId,
+    householdId: data.householdId,
+    message: data.message,
   };
 }
 
-
 export async function joinHousehold(householdId, monthlyIncome) {
-  await delay(800);
-  
-  return mockHousehold;
-}
+  const data = await request("/household/join", {
+    method: "POST",
+    body: JSON.stringify({ householdId, monthlyIncome }),
+  });
 
+  const currentUser = getStoredUser();
+  if (currentUser) {
+    const updatedUser = {
+      ...currentUser,
+      householdId: data.householdId,
+    };
+    setStoredUser(updatedUser);
+  }
 
-export async function getHousehold(householdId) {
-  await delay(300);
-  
-  return mockHousehold;
+  return data;
 }
 
 /**
- * BUDGET ENDPOINTS
+ * BUDGET
  */
-
 
 export async function getBudgetSummary(month) {
-  await delay(500);
-  
-  
-  if (month === '2025-01') {
-    return mockBudgetSummary;
+  try {
+    return await request(`/budget/plans/${month}/summary`, {
+      method: "GET",
+    });
+  } catch (error) {
+    if (error.message === "Budget plan not found for month") {
+      return {
+        month,
+        split: { mode: "income", percentMore: 0 },
+        totalBudget: 0,
+        totalIncome: 0,
+        people: [],
+        categories: [],
+      };
+    }
+
+    throw error;
   }
-  return { ...emptyBudgetSummary, month };
 }
 
-
-export async function saveBudgetPlan(month, categories) {
-  await delay(800);
-  
-  console.log('Saving budget:', { month, categories });
-  return mockBudgetSummary;
+export async function saveBudgetPlan(
+  month,
+  categories,
+  split = { mode: "income", percentMore: 0 }
+) {
+  return request("/budget/plans", {
+    method: "POST",
+    body: JSON.stringify({ month, categories, split }),
+  });
 }
 
+export async function updateSplitMode(month, splitMode) {
+  const split =
+    typeof splitMode === "string"
+      ? { mode: splitMode, percentMore: 0 }
+      : splitMode;
 
-export async function updateSplitMode(month, split) {
-  await delay(300);
-  
-  return { ...mockBudgetSummary, split };
+  return request(`/budget/plans/${month}/split`, {
+    method: "PATCH",
+    body: JSON.stringify({ split }),
+  });
 }
 
 /**
- * USER ENDPOINTS
+ * USER STATE HELPERS
  */
 
-
-export async function updateProfile(data) {
-  await delay(500);
-  
-  return { ...mockCurrentUser, ...data };
+export function isAuthenticated() {
+  return Boolean(getToken());
 }
 
-
-export async function updateIncome(monthlyIncome) {
-  await delay(500);
-  
-  console.log('Updated income:', monthlyIncome);
+export function getAuthToken() {
+  return getToken();
 }
