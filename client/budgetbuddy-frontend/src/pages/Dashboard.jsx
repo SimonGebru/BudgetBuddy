@@ -8,14 +8,15 @@ import { SplitModeSelector } from '@/components/budget/SplitModeSelector';
 import { CategoryCard, CategoryCardSkeleton } from '@/components/budget/CategoryCard';
 import { EmptyBudget } from '@/components/budget/EmptyBudget';
 import { Button } from '@/components/ui/button';
-import { getBudgetSummary, updateSplitMode } from '@/services/api';
-import { getCurrentMonth, mockCurrentUser } from '@/data/mockData';
+import { getBudgetSummary, updateSplitMode, getCurrentUser } from '@/services/api';
+import { getCurrentMonth } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Dashboard() {
   const { toast } = useToast();
   const [month, setMonth] = useState(getCurrentMonth());
   const [budget, setBudget] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -25,8 +26,13 @@ export default function Dashboard() {
   const loadBudget = async () => {
     setIsLoading(true);
     try {
-      const data = await getBudgetSummary(month);
-      setBudget(data);
+      const [budgetData, userData] = await Promise.all([
+        getBudgetSummary(month),
+        getCurrentUser(),
+      ]);
+
+      setBudget(budgetData);
+      setCurrentUser(userData);
     } catch (error) {
       toast({
         title: 'Error',
@@ -42,8 +48,10 @@ export default function Dashboard() {
     if (!budget) return;
     
     try {
-      const updated = await updateSplitMode(month, newSplit);
-      setBudget({ ...budget, split: newSplit });
+      await updateSplitMode(month, newSplit);
+
+      const refreshedBudget = await getBudgetSummary(month);
+      setBudget(refreshedBudget);
       // In real app, we'd recalculate the split from the backend response
     } catch (error) {
       toast({
@@ -80,12 +88,12 @@ export default function Dashboard() {
         )}
 
         {/* Content */}
-        {!isLoading && budget && (
+        {!isLoading && budget && currentUser && (
           <>
             {hasBudget ? (
               <>
                 {/* Summary Cards */}
-                <SummaryCards budget={budget} currentUserId={mockCurrentUser.id} />
+                <SummaryCards budget={budget} currentUserId={currentUser.id} />
 
                 {/* Split Mode Selector */}
                 <SplitModeSelector split={budget.split} onChange={handleSplitChange} />
@@ -96,9 +104,9 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     {budget.categories.map((category, index) => (
                       <CategoryCard
-                        key={category.id}
+                        key={category.id || category.name || index}
                         category={category}
-                        currentUserId={mockCurrentUser.id}
+                        currentUserId={currentUser.id}
                         index={index}
                       />
                     ))}

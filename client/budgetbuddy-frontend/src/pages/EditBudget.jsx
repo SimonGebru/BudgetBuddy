@@ -28,11 +28,21 @@ export default function EditBudget() {
       const data = await getBudgetSummary(month);
       setBudget(data);
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load budget data.',
-        variant: 'destructive',
-      });
+      // Om ingen budget finns ännu för månaden,
+      // starta med tom kategori-lista istället för att visa error
+      if (error.message === 'Budget plan not found for month') {
+        setBudget({
+          month,
+          categories: [],
+          split: { mode: 'income', percentMore: 0 },
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to load budget data.',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +71,6 @@ export default function EditBudget() {
   return (
     <AppLayout showNav={false}>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -77,7 +86,6 @@ export default function EditBudget() {
           </div>
         </div>
 
-        {/* Loading */}
         {isLoading && (
           <div className="space-y-3">
             {[...Array(4)].map((_, i) => (
@@ -94,7 +102,6 @@ export default function EditBudget() {
           </div>
         )}
 
-        {/* Editor */}
         {!isLoading && budget && (
           <BudgetEditor
             categories={budget.categories}

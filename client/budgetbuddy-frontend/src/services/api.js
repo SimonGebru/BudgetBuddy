@@ -137,6 +137,14 @@ export async function joinHousehold(householdId, monthlyIncome) {
   return data;
 }
 
+export async function getMyHousehold() {
+  const data = await request("/household/me", {
+    method: "GET",
+  });
+
+  return data.household;
+}
+
 /**
  * BUDGET
  */

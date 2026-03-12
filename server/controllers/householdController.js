@@ -91,3 +91,43 @@ export async function joinHousehold(req, res) {
     return res.status(500).json({ error: "ServerError", message: err.message });
   }
 }
+
+export async function getMyHousehold(req, res) {
+  try {
+    if (!req.user.householdId) {
+      return res.status(404).json({
+        error: "NotFound",
+        message: "User is not connected to a household",
+      });
+    }
+
+    const household = await Household.findById(req.user.householdId)
+      .populate("members.userId", "name email")
+      .exec();
+
+    if (!household) {
+      return res.status(404).json({
+        error: "NotFound",
+        message: "Household not found",
+      });
+    }
+
+    return res.status(200).json({
+      household: {
+        id: household._id,
+        name: household.name,
+        members: household.members.map((member) => ({
+          userId: member.userId?._id,
+          name: member.userId?.name || "Unknown",
+          email: member.userId?.email || "",
+          monthlyIncome: member.monthlyIncome,
+        })),
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: "ServerError",
+      message: err.message,
+    });
+  }
+}

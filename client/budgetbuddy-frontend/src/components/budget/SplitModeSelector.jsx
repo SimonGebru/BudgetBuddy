@@ -1,25 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Scale, Percent, Crown, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
 
 const modes = [
   { value: 'income', label: 'Income', icon: Scale },
-  { value: '50-50', label: '50/50', icon: Percent },
-  { value: 'top-earner', label: 'Top +%', icon: Crown },
+  { value: 'equal', label: '50/50', icon: Percent },
+  { value: 'topEarnsMore', label: 'Top +%', icon: Crown },
 ];
 
 export function SplitModeSelector({ split, onChange }) {
-  const [percentMore, setPercentMore] = useState(split.percentMore);
+  const [percentMore, setPercentMore] = useState(split?.percentMore ?? 0);
+
+  useEffect(() => {
+    setPercentMore(split?.percentMore ?? 0);
+  }, [split]);
 
   const handleModeChange = (mode) => {
-    onChange({ ...split, mode });
+    onChange({
+      mode,
+      percentMore: mode === 'topEarnsMore' ? percentMore : 0,
+    });
   };
 
   const handlePercentChange = (values) => {
     const newPercent = values[0];
     setPercentMore(newPercent);
-    onChange({ ...split, percentMore: newPercent });
+    onChange({
+      mode: 'topEarnsMore',
+      percentMore: newPercent,
+    });
   };
 
   return (
@@ -55,13 +65,13 @@ export function SplitModeSelector({ split, onChange }) {
         <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
         <p>
           {split.mode === 'income' && 'Each person pays proportionally to their income.'}
-          {split.mode === '50-50' && 'Both pay exactly 50% of all expenses.'}
-          {split.mode === 'top-earner' && `The higher earner pays ${percentMore}% more than their income share.`}
+          {split.mode === 'equal' && 'Both pay exactly 50% of all expenses.'}
+          {split.mode === 'topEarnsMore' && `The higher earner pays ${percentMore}% more than the other person.`}
         </p>
       </div>
 
       {/* Top Earner Slider */}
-      {split.mode === 'top-earner' && (
+      {split.mode === 'topEarnsMore' && (
         <div className="card-elevated p-4 space-y-4 lg:max-w-md">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Extra percentage</span>

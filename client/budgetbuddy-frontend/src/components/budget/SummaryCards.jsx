@@ -46,8 +46,12 @@ function SummaryCard({ label, value, icon: Icon, variant = 'default' }) {
 }
 
 export function SummaryCards({ budget, currentUserId }) {
-  const currentUser = budget.people.find((p) => p.userId === currentUserId);
-  const partner = budget.people.find((p) => p.userId !== currentUserId);
+  const currentUser = budget.people.find(
+    (p) => String(p.userId) === String(currentUserId)
+  );
+  const partner = budget.people.find(
+    (p) => String(p.userId) !== String(currentUserId)
+  );
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">

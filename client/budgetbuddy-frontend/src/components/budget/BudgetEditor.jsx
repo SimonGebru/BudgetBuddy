@@ -6,8 +6,12 @@ import { cn } from '@/lib/utils';
 
 export function BudgetEditor({ categories, onSave, isSaving }) {
   const [items, setItems] = useState(
-    categories.map((c) => ({ id: c.id, name: c.name, amount: c.amount }))
-  );
+  categories.map((c, index) => ({
+    id: c.id || `existing-${index}`,
+    name: c.name,
+    amount: c.amount,
+  }))
+);
 
   const addCategory = () => {
     const newCategory = {

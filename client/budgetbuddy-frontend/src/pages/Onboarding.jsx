@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Home, Users, ArrowRight, CheckCircle, Copy, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { createHousehold, joinHousehold } from '@/services/api';
+import { createHousehold, joinHousehold, getCurrentUser } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -12,22 +12,42 @@ export default function Onboarding() {
   const { toast } = useToast();
   const [step, setStep] = useState('choice');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingUser, setIsCheckingUser] = useState(true);
 
-  // Create form state
+  
   const [householdName, setHouseholdName] = useState('');
   const [monthlyIncome, setMonthlyIncome] = useState('');
 
-  // Join form state
+  
   const [householdId, setHouseholdId] = useState('');
   const [joinIncome, setJoinIncome] = useState('');
 
-  // Success state
+  
   const [createdHouseholdId, setCreatedHouseholdId] = useState('');
   const [successType, setSuccessType] = useState('created');
 
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const user = await getCurrentUser();
+
+        if (user?.householdId) {
+          navigate('/dashboard');
+          return;
+        }
+      } catch (error) {
+        console.error('Failed to check current user:', error);
+      } finally {
+        setIsCheckingUser(false);
+      }
+    };
+
+    checkUser();
+  }, [navigate]);
+
   const handleCreate = async (e) => {
     e.preventDefault();
-    
+
     if (!householdName || !monthlyIncome) {
       toast({
         title: 'Missing fields',
@@ -56,7 +76,7 @@ export default function Onboarding() {
 
   const handleJoin = async (e) => {
     e.preventDefault();
-    
+
     if (!householdId || !joinIncome) {
       toast({
         title: 'Missing fields',
@@ -90,10 +110,19 @@ export default function Onboarding() {
     });
   };
 
+  if (isCheckingUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 gradient-warm">
+        <div className="card-elevated p-6 text-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 gradient-warm">
       <div className="w-full max-w-sm lg:max-w-lg animate-scale-in">
-        {/* Header */}
         {step !== 'success' && (
           <div className="text-center mb-8">
             <div className="w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
@@ -108,7 +137,6 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Choice Step */}
         {step === 'choice' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <button
@@ -149,7 +177,6 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Create Step */}
         {step === 'create' && (
           <div className="card-elevated p-6">
             <form onSubmit={handleCreate} className="space-y-4">
@@ -191,7 +218,6 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Join Step */}
         {step === 'join' && (
           <div className="card-elevated p-6">
             <form onSubmit={handleJoin} className="space-y-4">
@@ -233,10 +259,8 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Success Step */}
         {step === 'success' && (
           <div className="text-center animate-scale-in">
-            {/* Success Icon */}
             <div className="w-20 h-20 lg:w-24 lg:h-24 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
               <CheckCircle className="h-10 w-10 lg:h-12 lg:w-12 text-primary" />
             </div>
@@ -250,7 +274,6 @@ export default function Onboarding() {
                 : "You've successfully joined the household. You can now budget together!"}
             </p>
 
-            {/* Household ID Card (only for created) */}
             {successType === 'created' && (
               <div className="card-elevated p-4 mb-6">
                 <p className="text-xs font-medium text-muted-foreground mb-2">Your Household ID</p>
@@ -266,7 +289,6 @@ export default function Onboarding() {
               </div>
             )}
 
-            {/* Next Steps */}
             <div className="space-y-3">
               <Button asChild size="lg" className="w-full">
                 <Link to={`/budget/${new Date().toISOString().slice(0, 7)}/edit`}>

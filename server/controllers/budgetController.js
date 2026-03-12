@@ -6,7 +6,6 @@ function roundMoney(n) {
 }
 
 function calcWeights({ mode, percentMore }, members) {
-
   if (!Array.isArray(members) || members.length < 2) {
     return [];
   }
@@ -33,6 +32,13 @@ function calcWeights({ mode, percentMore }, members) {
     const sorted = [...incomes].sort((a, b) => b.monthlyIncome - a.monthlyIncome);
     const top = sorted[0];
     const other = sorted[1];
+
+    // Om båda tjänar lika mycket ska vi inte välja en "top earner"
+    // utan falla tillbaka till equal
+    if (top.monthlyIncome === other.monthlyIncome) {
+      const w = 1 / incomes.length;
+      return incomes.map((p) => ({ ...p, weight: w }));
+    }
 
     const topWeight = ratio / (ratio + 1);
     const otherWeight = 1 / (ratio + 1);

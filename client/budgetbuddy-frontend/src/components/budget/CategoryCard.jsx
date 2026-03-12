@@ -2,10 +2,17 @@ import { formatCurrency } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 
 export function CategoryCard({ category, currentUserId, index }) {
-  const currentUserShare = category.perPerson.find((p) => p.userId === currentUserId);
-  const partnerShare = category.perPerson.find((p) => p.userId !== currentUserId);
+  const currentUserShare = category.perPerson.find(
+    (p) => String(p.userId) === String(currentUserId)
+  );
+  const partnerShare = category.perPerson.find(
+    (p) => String(p.userId) !== String(currentUserId)
+  );
   
-  const currentUserPercent = (currentUserShare?.amount || 0) / category.amount * 100;
+  const currentUserPercent =
+    category.amount > 0
+      ? ((currentUserShare?.amount || 0) / category.amount) * 100
+      : 0;
 
   return (
     <div
