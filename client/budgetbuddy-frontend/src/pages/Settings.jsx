@@ -1,21 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Mail, Settings as SettingsIcon, Lock } from 'lucide-react';
+import { LogOut, User, Mail, Settings as SettingsIcon, Lock, Save } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
-import { logout } from '@/services/api';
-import { mockCurrentUser } from '@/data/mockData';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { updateMe } from '@/services/api';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, clearAuth, setUser } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+
+  useEffect(() => {
+    setName(user?.name || '');
+    setEmail(user?.email || '');
+  }, [user]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await logout();
+      await clearAuth();
       toast({
         title: 'Logged out',
         description: 'See you next time!',
@@ -32,6 +43,45 @@ export default function Settings() {
     }
   };
 
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+
+    if (!name.trim() || !email.trim()) {
+      toast({
+        title: 'Missing fields',
+        description: 'Name and email cannot be empty.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSavingProfile(true);
+    try {
+      const updatedUser = await updateMe({
+        name: name.trim(),
+        email: email.trim(),
+      });
+
+      setUser(updatedUser);
+
+      toast({
+        title: 'Profile updated',
+        description: 'Your profile information has been saved.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Update failed',
+        description: error.message || 'Could not update your profile.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const displayName = user?.name || 'User';
+  const displayEmail = user?.email || 'No email';
+
   return (
     <AppLayout>
       <div className="space-y-6 lg:max-w-2xl">
@@ -43,32 +93,53 @@ export default function Settings() {
           <div className="flex items-center gap-4 lg:gap-6 mb-6">
             <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full gradient-primary flex items-center justify-center">
               <span className="text-2xl lg:text-3xl font-bold text-primary-foreground">
-                {mockCurrentUser.name.charAt(0).toUpperCase()}
+                {displayName.charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
-              <h2 className="text-lg lg:text-xl font-semibold text-foreground">{mockCurrentUser.name}</h2>
-              <p className="text-sm lg:text-base text-muted-foreground">{mockCurrentUser.email}</p>
+              <h2 className="text-lg lg:text-xl font-semibold text-foreground">{displayName}</h2>
+              <p className="text-sm lg:text-base text-muted-foreground">{displayEmail}</p>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-              <User className="h-5 w-5 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Name</p>
-                <p className="font-medium text-foreground">{mockCurrentUser.name}</p>
+          <form onSubmit={handleSaveProfile} className="space-y-4">
+            <div>
+              <label className="input-label">Name</label>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <User className="h-5 w-5 text-muted-foreground" />
+                <div className="flex-1">
+                  <Input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-              <Mail className="h-5 w-5 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium text-foreground">{mockCurrentUser.email}</p>
+            <div>
+              <label className="input-label">Email</label>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <Mail className="h-5 w-5 text-muted-foreground" />
+                <div className="flex-1">
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+                  />
+                </div>
               </div>
             </div>
-          </div>
+
+            <Button type="submit" className="w-full" size="lg" disabled={isSavingProfile}>
+              <Save className="h-4 w-4 mr-2" />
+              {isSavingProfile ? 'Saving...' : 'Save Profile'}
+            </Button>
+          </form>
         </div>
 
         {/* Preferences */}

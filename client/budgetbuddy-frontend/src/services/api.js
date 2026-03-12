@@ -93,6 +93,16 @@ export async function getCurrentUser() {
   return data.user;
 }
 
+export async function updateMe(updates) {
+  const data = await request("/auth/me", {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+  });
+
+  setStoredUser(data.user);
+  return data.user;
+}
+
 /**
  * HOUSEHOLD
  */
@@ -143,6 +153,13 @@ export async function getMyHousehold() {
   });
 
   return data.household;
+}
+
+export async function updateMyIncome(month, amount) {
+  return request("/household/income", {
+    method: "PATCH",
+    body: JSON.stringify({ month, amount }),
+  });
 }
 
 /**

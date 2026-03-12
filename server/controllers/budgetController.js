@@ -5,7 +5,19 @@ function roundMoney(n) {
   return Math.round(Number(n) || 0);
 }
 
-function calcWeights({ mode, percentMore }, members) {
+function getIncomeForMonth(member, month) {
+  const history = Array.isArray(member.incomeHistory) ? member.incomeHistory : [];
+
+  const match = history.find((entry) => entry.month === month);
+
+  if (match) {
+    return Number(match.amount) || 0;
+  }
+
+  return Number(member.monthlyIncome) || 0;
+}
+
+function calcWeights({ mode, percentMore }, members, month) {
   if (!Array.isArray(members) || members.length < 2) {
     return [];
   }
@@ -14,7 +26,7 @@ function calcWeights({ mode, percentMore }, members) {
   const incomes = members.map((m) => ({
     userId: m.userId._id?.toString?.() || m.userId.toString(),
     name: m.userId.name,
-    monthlyIncome: Number(m.monthlyIncome) || 0,
+    monthlyIncome: getIncomeForMonth(m, month),
   }));
 
   if (mode === "equal") {
@@ -155,7 +167,7 @@ export async function getBudgetSummary(req, res) {
 
     // räkna weights beroende på split-mode
     const split = plan.split || { mode: "income", percentMore: 0 };
-    const peopleWithWeights = calcWeights(split, household.members);
+    const peopleWithWeights = calcWeights(split, household.members, month);
 
     const totalIncome = peopleWithWeights.reduce((sum, p) => sum + p.monthlyIncome, 0);
 
@@ -215,6 +227,7 @@ export async function getBudgetSummary(req, res) {
     return res.status(500).json({ error: "ServerError", message: err.message });
   }
 }
+
 export async function updateBudgetSplit(req, res) {
   try {
     const { month } = req.params;

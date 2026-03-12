@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { register } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Register() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setUser } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,7 +40,9 @@ export default function Register() {
 
     setIsLoading(true);
     try {
-      await register(name, email, password);
+      const user = await register(name, email, password);
+      setUser(user);
+
       toast({
         title: 'Account created!',
         description: 'Welcome to BudgetBuddy.',

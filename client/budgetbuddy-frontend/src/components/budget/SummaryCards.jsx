@@ -1,4 +1,4 @@
-import { Wallet, TrendingUp, User, Users } from 'lucide-react';
+import { Wallet, TrendingUp, User, Users, Coins } from 'lucide-react';
 import { formatCurrency } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 
@@ -8,7 +8,8 @@ function SummaryCard({ label, value, icon: Icon, variant = 'default' }) {
       className={cn(
         'card-elevated p-4 animate-fade-in',
         variant === 'primary' && 'bg-primary text-primary-foreground',
-        variant === 'accent' && 'bg-secondary'
+        variant === 'accent' && 'bg-secondary',
+        variant === 'mine' && 'bg-emerald-50 border border-emerald-200'
       )}
     >
       <div className="flex items-start justify-between">
@@ -16,13 +17,25 @@ function SummaryCard({ label, value, icon: Icon, variant = 'default' }) {
           <p
             className={cn(
               'text-xs font-medium',
-              variant === 'primary' ? 'text-primary-foreground/80' : 'text-muted-foreground'
+              variant === 'primary'
+                ? 'text-primary-foreground/80'
+                : variant === 'mine'
+                ? 'text-emerald-700/80'
+                : 'text-muted-foreground'
             )}
           >
             {label}
           </p>
-          <p className="text-lg font-bold tracking-tight">{value}</p>
+          <p
+            className={cn(
+              'text-lg font-bold tracking-tight',
+              variant === 'mine' && 'text-emerald-900'
+            )}
+          >
+            {value}
+          </p>
         </div>
+
         <div
           className={cn(
             'p-2 rounded-lg',
@@ -30,13 +43,19 @@ function SummaryCard({ label, value, icon: Icon, variant = 'default' }) {
               ? 'bg-primary-foreground/20'
               : variant === 'accent'
               ? 'bg-primary/10'
+              : variant === 'mine'
+              ? 'bg-emerald-100'
               : 'bg-muted'
           )}
         >
           <Icon
             className={cn(
               'h-4 w-4',
-              variant === 'primary' ? 'text-primary-foreground' : 'text-primary'
+              variant === 'primary'
+                ? 'text-primary-foreground'
+                : variant === 'mine'
+                ? 'text-emerald-600'
+                : 'text-primary'
             )}
           />
         </div>
@@ -54,26 +73,42 @@ export function SummaryCards({ budget, currentUserId }) {
   );
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-4">
       <SummaryCard
         label="Total Budget"
         value={formatCurrency(budget.totalBudget)}
         icon={Wallet}
         variant="primary"
       />
+
       <SummaryCard
         label="Combined Income"
         value={formatCurrency(budget.totalIncome)}
         icon={TrendingUp}
       />
+
+      <SummaryCard
+        label="Your Income"
+        value={formatCurrency(currentUser?.monthlyIncome || 0)}
+        icon={Coins}
+        variant="mine"
+      />
+
+      <SummaryCard
+        label="Partner Income"
+        value={formatCurrency(partner?.monthlyIncome || 0)}
+        icon={Users}
+      />
+
       <SummaryCard
         label="Your Share"
         value={formatCurrency(currentUser?.contributionTotal || 0)}
         icon={User}
-        variant="accent"
+        variant="mine"
       />
+
       <SummaryCard
-        label={`${partner?.name || 'Partner'}'s Share`}
+        label="Partner Share"
         value={formatCurrency(partner?.contributionTotal || 0)}
         icon={Users}
       />
@@ -83,8 +118,8 @@ export function SummaryCards({ budget, currentUserId }) {
 
 export function SummaryCardsSkeleton() {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-      {[...Array(4)].map((_, i) => (
+    <div className="grid grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-4">
+      {[...Array(6)].map((_, i) => (
         <div key={i} className="card-elevated p-4 h-[88px]">
           <div className="space-y-2">
             <div className="skeleton-shimmer h-3 w-20" />

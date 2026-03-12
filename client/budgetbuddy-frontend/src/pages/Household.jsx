@@ -1,16 +1,37 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Copy, Home, Users } from "lucide-react";
+import { Copy, Home, Users, Save } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { getCurrentUser, getMyHousehold } from "@/services/api";
+import { Input } from "@/components/ui/input";
+import { getCurrentUser, getMyHousehold, updateMyIncome } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+
+function getCurrentMonth() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function getIncomeForMonth(member, month) {
+  const history = Array.isArray(member.incomeHistory) ? member.incomeHistory : [];
+  const match = history.find((entry) => entry.month === month);
+
+  if (match) {
+    return Number(match.amount) || 0;
+  }
+
+  return Number(member.monthlyIncome) || 0;
+}
 
 export default function Household() {
   const navigate = useNavigate();
   const { toast } = useToast();
+
   const [household, setHousehold] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+  const [myIncome, setMyIncome] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isSavingIncome, setIsSavingIncome] = useState(false);
 
   useEffect(() => {
     const loadHousehold = async () => {
@@ -23,7 +44,16 @@ export default function Household() {
         }
 
         const data = await getMyHousehold();
+        setCurrentUser(user);
         setHousehold(data);
+
+        const me = data.members.find(
+          (member) => String(member.userId) === String(user.id)
+        );
+
+        if (me) {
+          setMyIncome(String(getIncomeForMonth(me, selectedMonth)));
+        }
       } catch (error) {
         toast({
           title: "Error",
@@ -38,6 +68,18 @@ export default function Household() {
     loadHousehold();
   }, [navigate, toast]);
 
+  useEffect(() => {
+    if (!household || !currentUser) return;
+
+    const me = household.members.find(
+      (member) => String(member.userId) === String(currentUser.id)
+    );
+
+    if (me) {
+      setMyIncome(String(getIncomeForMonth(me, selectedMonth)));
+    }
+  }, [selectedMonth, household, currentUser]);
+
   const handleCopyId = async () => {
     if (!household?.id) return;
 
@@ -47,6 +89,50 @@ export default function Household() {
       description: "Household ID copied to clipboard.",
     });
   };
+
+  const handleSaveIncome = async () => {
+    const incomeNumber = Number(myIncome);
+
+    if (!Number.isFinite(incomeNumber) || incomeNumber < 0) {
+      toast({
+        title: "Invalid income",
+        description: "Please enter a valid number greater than or equal to 0.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSavingIncome(true);
+
+    try {
+      await updateMyIncome(selectedMonth, incomeNumber);
+
+      const updatedHousehold = await getMyHousehold();
+      setHousehold(updatedHousehold);
+
+      toast({
+        title: "Income updated",
+        description: `Your income for ${selectedMonth} has been saved.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not update your income.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingIncome(false);
+    }
+  };
+
+  const membersWithSelectedMonthIncome = useMemo(() => {
+    if (!household) return [];
+
+    return household.members.map((member) => ({
+      ...member,
+      displayedIncome: getIncomeForMonth(member, selectedMonth),
+    }));
+  }, [household, selectedMonth]);
 
   return (
     <AppLayout>
@@ -85,31 +171,82 @@ export default function Household() {
               </div>
             </div>
 
+            <div className="card-elevated p-6 space-y-4">
+              <div>
+                <h3 className="font-semibold text-foreground">Monthly income</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Choose a month and update your income for that specific budget period.
+                </p>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-[180px_1fr_auto]">
+                <div>
+                  <label className="input-label">Month</label>
+                  <Input
+                    type="month"
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="input-label">Your income for selected month</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={myIncome}
+                    onChange={(e) => setMyIncome(e.target.value)}
+                    placeholder="Enter your income"
+                  />
+                </div>
+
+                <div className="flex items-end">
+                  <Button
+                    onClick={handleSaveIncome}
+                    disabled={isSavingIncome}
+                    className="w-full lg:w-auto"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {isSavingIncome ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             <div className="card-elevated p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Users className="h-5 w-5 text-muted-foreground" />
-                <h3 className="font-semibold text-foreground">Members</h3>
+                <h3 className="font-semibold text-foreground">
+                  Members ({selectedMonth})
+                </h3>
               </div>
 
               <div className="space-y-3">
-                {household.members.map((member) => (
-                  <div
-                    key={member.userId}
-                    className="flex items-center justify-between rounded-xl bg-muted/40 p-4"
-                  >
-                    <div>
-                      <p className="font-medium text-foreground">{member.name}</p>
-                      <p className="text-sm text-muted-foreground">{member.email}</p>
-                    </div>
+                {membersWithSelectedMonthIncome.map((member) => {
+                  const isMe =
+                    currentUser && String(member.userId) === String(currentUser.id);
 
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Monthly income</p>
-                      <p className="font-semibold text-foreground">
-                        {member.monthlyIncome} SEK
-                      </p>
+                  return (
+                    <div
+                      key={member.userId}
+                      className="flex items-center justify-between rounded-xl bg-muted/40 p-4"
+                    >
+                      <div>
+                        <p className="font-medium text-foreground">
+                          {member.name} {isMe ? "(You)" : ""}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{member.email}</p>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">Income for {selectedMonth}</p>
+                        <p className="font-semibold text-foreground">
+                          {member.displayedIncome} SEK
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </>

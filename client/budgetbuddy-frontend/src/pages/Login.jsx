@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { login } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -29,6 +31,8 @@ export default function Login() {
     setIsLoading(true);
     try {
       const user = await login(email, password);
+      setUser(user);
+
       toast({
         title: 'Welcome back!',
         description: `Logged in as ${user.name}`,
