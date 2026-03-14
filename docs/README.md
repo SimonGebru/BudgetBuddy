@@ -60,7 +60,7 @@ Istället för att manuellt räkna i Excel varje månad:
 
 - En användare kan skapa eller gå med i ett hushåll
 - Ett hushåll kan ha flera medlemmar
-- Varje medlem har en registrerad månadsinkomst
+- Varje medlem har en registrerad månadsinkomst per månad
 - Budget och beräkningar sker alltid på hushållsnivå
 
 ---
@@ -126,3 +126,28 @@ Alla beräkningar görs i backend och returneras färdiga för frontend att visa
 - Roller (t.ex. admin i hushåll)
 - Fler än två användare med avancerad split-logik
 - Diagram och visualisering i frontend
+
+
+---
+
+---
+
+## Versionshantering (Git)
+
+Projektet har utvecklats med Git och GitHub.
+
+Eftersom projektet genomfördes individuellt användes ett förenklat branch-upplägg istället för full Git Flow.
+
+### Branchstruktur
+
+- **main**
+  - Stabil version av projektet
+  - Används som demonstrations- och releasegren
+
+- **dev**
+  - Aktiv utvecklingsgren
+  - Ny funktionalitet implementeras och testas här
+
+Under utvecklingen gjordes löpande commits i `dev` när nya funktioner eller förbättringar implementerades. När funktionalitet ansågs stabil kunde den föras vidare till `main`.
+
+Detta arbetssätt valdes eftersom projektet utvecklades av en ensam utvecklare. I ett större teamprojekt hade en mer formell strategi kunnat användas, exempelvis Git Flow med separata feature-branches och pull requests.
