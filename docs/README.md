@@ -1,4 +1,7 @@
 # BudgetBuddy – Examensarbete (Fullstack)
+![Backend CI](https://github.com/SimonGebru/BudgetBuddy/actions/workflows/backend-ci.yml/badge.svg)
+
+![Frontend Lint](https://github.com/SimonGebru/BudgetBuddy/actions/workflows/frontend-lint.yml/badge.svg)
 
 BudgetBuddy är en fullstack-webbapplikation framtagen som examensarbete.  
 Applikationen är byggd för att hjälpa två personer (t.ex. sambor) att planera sin gemensamma månadsbudget och automatiskt räkna ut hur kostnader ska fördelas på ett rättvist sätt.
