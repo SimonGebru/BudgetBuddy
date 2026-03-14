@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Scale, Percent, Crown, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
@@ -10,11 +9,7 @@ const modes = [
 ];
 
 export function SplitModeSelector({ split, onChange }) {
-  const [percentMore, setPercentMore] = useState(split?.percentMore ?? 0);
-
-  useEffect(() => {
-    setPercentMore(split?.percentMore ?? 0);
-  }, [split]);
+  const percentMore = split?.percentMore ?? 0;
 
   const handleModeChange = (mode) => {
     onChange({
@@ -25,7 +20,6 @@ export function SplitModeSelector({ split, onChange }) {
 
   const handlePercentChange = (values) => {
     const newPercent = values[0];
-    setPercentMore(newPercent);
     onChange({
       mode: 'topEarnsMore',
       percentMore: newPercent,
