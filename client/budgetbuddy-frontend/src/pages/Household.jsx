@@ -8,6 +8,7 @@ import { getCurrentUser, getMyHousehold, updateMyIncome } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
 function getCurrentMonth() {
+  // Används som defaultvärde när sidan öppnas första gången.
   return new Date().toISOString().slice(0, 7);
 }
 
@@ -15,6 +16,8 @@ function getIncomeForMonth(member, month) {
   const history = Array.isArray(member.incomeHistory) ? member.incomeHistory : [];
   const match = history.find((entry) => entry.month === month);
 
+  // Om medlemmen har en sparad inkomst för just den månaden används den,
+  // annars faller vi tillbaka på monthlyIncome.
   if (match) {
     return Number(match.amount) || 0;
   }
@@ -38,6 +41,8 @@ export default function Household() {
       try {
         const user = await getCurrentUser();
 
+        // Om användaren inte är kopplad till något hushåll
+        // skickas den vidare till onboarding-flödet.
         if (!user?.householdId) {
           navigate("/onboarding");
           return;
@@ -51,6 +56,7 @@ export default function Household() {
           (member) => String(member.userId) === String(user.id)
         );
 
+        // Förifyller användarens inkomst för vald månad när datan laddats in.
         if (me) {
           setMyIncome(String(getIncomeForMonth(me, selectedMonth)));
         }
@@ -75,6 +81,8 @@ export default function Household() {
       (member) => String(member.userId) === String(currentUser.id)
     );
 
+    // När användaren byter månad uppdateras inputfältet
+    // så att rätt inkomst visas för just den månaden.
     if (me) {
       setMyIncome(String(getIncomeForMonth(me, selectedMonth)));
     }
@@ -84,6 +92,7 @@ export default function Household() {
     if (!household?.id) return;
 
     await navigator.clipboard.writeText(household.id);
+
     toast({
       title: "Copied!",
       description: "Household ID copied to clipboard.",
@@ -107,6 +116,7 @@ export default function Household() {
     try {
       await updateMyIncome(selectedMonth, incomeNumber);
 
+      // Hämtar hushållet igen efter save så att UI:t visar senaste datan från backend.
       const updatedHousehold = await getMyHousehold();
       setHousehold(updatedHousehold);
 
@@ -128,6 +138,8 @@ export default function Household() {
   const membersWithSelectedMonthIncome = useMemo(() => {
     if (!household) return [];
 
+    // Skapar en lista där varje medlem får ett visningsvärde
+    // för inkomsten i den månad som är vald just nu.
     return household.members.map((member) => ({
       ...member,
       displayedIncome: getIncomeForMonth(member, selectedMonth),

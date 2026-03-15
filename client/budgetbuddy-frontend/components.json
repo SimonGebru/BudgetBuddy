@@ -1,4 +1,5 @@
 {
+  "_comment": "Configuration file for shadcn/ui. Defines how UI components are generated, where Tailwind is configured, and which path aliases are used in the project.",
   "$schema": "https://ui.shadcn.com/schema.json",
   "style": "new-york",
   "rsc": false,

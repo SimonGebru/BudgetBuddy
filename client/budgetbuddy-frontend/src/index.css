@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    
+    /* Grundfärger för appens ljusa tema */
     --background: 40 20% 98%;
     --foreground: 220 20% 14%;
 
@@ -14,25 +14,25 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 14%;
 
-    
+    /* Primära varumärkesfärger */
     --primary: 158 35% 42%;
     --primary-foreground: 0 0% 100%;
 
-    
+    /* Sekundära och mer neutrala ytor */
     --secondary: 35 25% 94%;
     --secondary-foreground: 220 20% 20%;
 
     --muted: 40 15% 95%;
     --muted-foreground: 220 10% 45%;
 
-    
+    /* Accent används för att bryta av i UI:t */
     --accent: 15 75% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    
+    /* Egen success-färg för positiva tillstånd */
     --success: 158 60% 40%;
     --success-foreground: 0 0% 100%;
 
@@ -42,17 +42,18 @@
 
     --radius: 0.75rem;
 
-    
+    /* Skuggor används för att ge kort och paneler olika nivåer av djup */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03);
     --shadow-card: 0 2px 8px -2px rgb(0 0 0 / 0.06), 0 4px 16px -4px rgb(0 0 0 / 0.08);
     --shadow-elevated: 0 8px 24px -8px rgb(0 0 0 / 0.1), 0 16px 48px -16px rgb(0 0 0 / 0.12);
 
-    
+    /* Gradienter som återanvänds i flera delar av gränssnittet */
     --gradient-primary: linear-gradient(135deg, hsl(158 35% 42%) 0%, hsl(158 40% 35%) 100%);
     --gradient-warm: linear-gradient(135deg, hsl(40 30% 97%) 0%, hsl(35 25% 94%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(40 20% 98%) 0%, hsl(35 25% 96%) 100%);
   }
 
+  /* Förberett mörkt tema med motsvarande design tokens */
   .dark {
     --background: 220 20% 10%;
     --foreground: 40 20% 98%;
@@ -97,17 +98,20 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
+  /* Gemensam typografi för rubriker */
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold tracking-tight;
   }
 }
 
 @layer components {
+  /* Återanvändbar kortstil för vanliga paneler */
   .card-elevated {
     @apply bg-card rounded-xl;
     box-shadow: var(--shadow-card);
   }
 
+  /* Variant av kort som även får hover-effekter */
   .card-interactive {
     @apply card-elevated transition-all duration-200;
   }
@@ -125,11 +129,13 @@
     background: var(--gradient-warm);
   }
 
+  /* Standardlayout för mobilvyer */
   .page-container {
     @apply min-h-screen pb-24 pt-4 px-4 max-w-lg mx-auto;
     background: var(--gradient-hero);
   }
 
+  /* Standardlayout för större skärmar */
   .page-container-desktop {
     @apply min-h-screen py-8 px-8 max-w-5xl mx-auto;
     background: var(--gradient-hero);

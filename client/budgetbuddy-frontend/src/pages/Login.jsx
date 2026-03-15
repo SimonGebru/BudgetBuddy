@@ -11,6 +11,7 @@ export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { setUser } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -18,7 +19,8 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // Enkel validering innan login-anropet skickas.
     if (!email || !password) {
       toast({
         title: 'Missing fields',
@@ -29,15 +31,19 @@ export default function Login() {
     }
 
     setIsLoading(true);
+
     try {
       const user = await login(email, password);
+
+      // Sparar användaren i auth-context så att resten av appen direkt vet att användaren är inloggad.
       setUser(user);
 
       toast({
         title: 'Welcome back!',
         description: `Logged in as ${user.name}`,
       });
-      // Navigate based on household status
+
+      // Skickar användaren vidare beroende på om hushållet redan finns eller om onboarding först behövs.
       if (user.householdId) {
         navigate('/dashboard');
       } else {
@@ -91,6 +97,8 @@ export default function Login() {
                   autoComplete="current-password"
                   className="pr-10"
                 />
+
+                {/* Låter användaren visa eller dölja lösenordet i inputfältet */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -122,6 +130,7 @@ export default function Login() {
               Create one
             </Link>
           </p>
+
           <p className="text-xs text-muted-foreground">
             <Link to="/onboarding" className="text-primary/70 hover:underline">
               Test onboarding flow →

@@ -2,11 +2,14 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, LogIn, UserPlus, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+// Landing page / entry point för applikationen.
+// Här kan användaren logga in, skapa konto eller fortsätta till appen.
 export default function Index() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 gradient-warm">
       <div className="w-full max-w-sm lg:max-w-lg animate-scale-in">
         
+        {/* App branding och kort introduktion */}
         <div className="text-center mb-8 lg:mb-10">
           <div className="w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
             <Wallet className="h-8 w-8 lg:h-10 lg:w-10 text-primary-foreground" />
@@ -22,7 +25,7 @@ export default function Index() {
           </p>
         </div>
 
-        
+        {/* Auth actions */}
         <div className="card-elevated p-6 lg:p-8 space-y-4">
           <Button asChild size="lg" className="w-full">
             <Link to="/login">
@@ -38,6 +41,7 @@ export default function Index() {
             </Link>
           </Button>
 
+          {/* Snabbväg för att gå direkt till appen */}
           <div className="pt-2 text-center">
             <Link
               to="/login"
@@ -49,7 +53,7 @@ export default function Index() {
           </div>
         </div>
 
-        
+        {/* Kort beskrivning av appens syfte */}
         <p className="text-center text-xs lg:text-sm text-muted-foreground mt-6">
           A simple way to manage shared budgets and household planning.
         </p>

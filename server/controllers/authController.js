@@ -6,6 +6,7 @@ export async function register(req, res) {
   try {
     const { name, email, password } = req.body;
 
+    // Enkel validering direkt i controllern innan vi går vidare.
     if (!name || !email || !password) {
       return res.status(400).json({
         error: "ValidationError",
@@ -13,6 +14,7 @@ export async function register(req, res) {
       });
     }
 
+    // Grundkrav för lösenord så att vi inte sparar alltför svaga lösenord.
     if (password.length < 6) {
       return res.status(400).json({
         error: "ValidationError",
@@ -20,6 +22,7 @@ export async function register(req, res) {
       });
     }
 
+    // Jag normaliserar e-post till lowercase så att samma adress inte kan registreras flera gånger med olika versaler.
     const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing) {
       return res.status(409).json({
@@ -28,6 +31,7 @@ export async function register(req, res) {
       });
     }
 
+    // Lösenord sparas aldrig i klartext utan hashas innan användaren skapas.
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await User.create({
@@ -37,6 +41,7 @@ export async function register(req, res) {
       householdId: null,
     });
 
+    // När användaren registrerats skapas en access token direkt så att användaren kan vara inloggad direkt efter signup.
     const token = signAccessToken({ userId: user._id.toString() });
 
     res.status(201).json({
@@ -57,6 +62,7 @@ export async function login(req, res) {
   try {
     const { email, password } = req.body;
 
+    // Login kräver bara e-post och lösenord.
     if (!email || !password) {
       return res.status(400).json({
         error: "ValidationError",
@@ -64,11 +70,13 @@ export async function login(req, res) {
       });
     }
 
-    // select("+passwordHash") eftersom jag satte select:false i schema
+    // passwordHash är exkluderad i schemat som standard, så här väljer jag in den uttryckligen.
     const user = await User.findOne({ email: email.toLowerCase() }).select(
       "+passwordHash"
     );
 
+    // Samma felmeddelande används både för fel e-post och fel lösenord.
+    // Det gör att man inte avslöjar vad som faktiskt var fel.
     if (!user) {
       return res.status(401).json({
         error: "Unauthorized",
@@ -84,6 +92,7 @@ export async function login(req, res) {
       });
     }
 
+    // Vid lyckad login skickas en ny token tillbaka tillsammans med grundläggande användardata.
     const token = signAccessToken({ userId: user._id.toString() });
 
     res.status(200).json({
@@ -102,6 +111,7 @@ export async function login(req, res) {
 
 export async function me(req, res) {
   try {
+    // req.user sätts i auth-middleware efter att token verifierats.
     return res.status(200).json({
       user: {
         id: req.user._id,
@@ -127,6 +137,7 @@ export async function updateMe(req, res) {
     if (typeof name !== "undefined") {
       const trimmedName = String(name).trim();
 
+      // Tillåter inte att namn uppdateras till tom sträng.
       if (!trimmedName) {
         return res.status(400).json({
           error: "ValidationError",
@@ -140,6 +151,7 @@ export async function updateMe(req, res) {
     if (typeof email !== "undefined") {
       const normalizedEmail = String(email).trim().toLowerCase();
 
+      // E-post får inte heller bli tom vid uppdatering.
       if (!normalizedEmail) {
         return res.status(400).json({
           error: "ValidationError",
@@ -147,6 +159,7 @@ export async function updateMe(req, res) {
         });
       }
 
+      // Kollar att den nya e-posten inte redan används av någon annan användare.
       const existing = await User.findOne({
         email: normalizedEmail,
         _id: { $ne: req.user._id },
@@ -162,7 +175,7 @@ export async function updateMe(req, res) {
       updates.email = normalizedEmail;
     }
 
-    // Den här delen är redo för senare när defaultSplitMode finns i User-modellen
+    // Den här delen gör att bara tillåtna värden kan sparas för standardvalet av split mode.
     if (typeof defaultSplitMode !== "undefined") {
       if (!["income", "equal", "topEarnsMore"].includes(defaultSplitMode)) {
         return res.status(400).json({
@@ -174,6 +187,7 @@ export async function updateMe(req, res) {
       updates.defaultSplitMode = defaultSplitMode;
     }
 
+    // Om inget giltigt skickades in ska ingen tom uppdatering göras.
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({
         error: "ValidationError",

@@ -10,19 +10,17 @@ import { cn } from '@/lib/utils';
 export default function Onboarding() {
   const navigate = useNavigate();
   const { toast } = useToast();
+
   const [step, setStep] = useState('choice');
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingUser, setIsCheckingUser] = useState(true);
 
-  
   const [householdName, setHouseholdName] = useState('');
   const [monthlyIncome, setMonthlyIncome] = useState('');
 
-  
   const [householdId, setHouseholdId] = useState('');
   const [joinIncome, setJoinIncome] = useState('');
 
-  
   const [createdHouseholdId, setCreatedHouseholdId] = useState('');
   const [successType, setSuccessType] = useState('created');
 
@@ -31,6 +29,8 @@ export default function Onboarding() {
       try {
         const user = await getCurrentUser();
 
+        // Om användaren redan är kopplad till ett hushåll
+        // ska onboarding hoppas över och användaren skickas till dashboarden.
         if (user?.householdId) {
           navigate('/dashboard');
           return;
@@ -58,8 +58,11 @@ export default function Onboarding() {
     }
 
     setIsLoading(true);
+
     try {
       const result = await createHousehold(householdName, Number(monthlyIncome));
+
+      // Sparar household-id så att det kan visas i success-steget efter skapandet.
       setCreatedHouseholdId(result.id);
       setSuccessType('created');
       setStep('success');
@@ -87,6 +90,7 @@ export default function Onboarding() {
     }
 
     setIsLoading(true);
+
     try {
       await joinHousehold(householdId, Number(joinIncome));
       setSuccessType('joined');
@@ -104,12 +108,14 @@ export default function Onboarding() {
 
   const copyHouseholdId = () => {
     navigator.clipboard.writeText(createdHouseholdId);
+
     toast({
       title: 'Copied!',
       description: 'Household ID copied to clipboard.',
     });
   };
 
+  // Visas medan vi först kontrollerar om användaren redan tillhör ett hushåll.
   if (isCheckingUser) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 gradient-warm">
@@ -128,7 +134,9 @@ export default function Onboarding() {
             <div className="w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
               <Home className="h-8 w-8 lg:h-10 lg:w-10 text-primary-foreground" />
             </div>
+
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Set up your household</h1>
+
             <p className="text-muted-foreground mt-1 lg:text-lg">
               {step === 'choice' && 'Budget together with your partner'}
               {step === 'create' && 'Create a new household'}
@@ -147,12 +155,14 @@ export default function Onboarding() {
                 <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <Home className="h-6 w-6 lg:h-7 lg:w-7 text-primary" />
                 </div>
+
                 <div className="flex-1">
                   <h3 className="font-semibold text-foreground lg:text-lg">Create Household</h3>
                   <p className="text-sm text-muted-foreground mt-0.5">
                     Start fresh and invite your partner
                   </p>
                 </div>
+
                 <ArrowRight className="h-5 w-5 text-muted-foreground" />
               </div>
             </button>
@@ -165,12 +175,14 @@ export default function Onboarding() {
                 <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
                   <Users className="h-6 w-6 lg:h-7 lg:w-7 text-accent" />
                 </div>
+
                 <div className="flex-1">
                   <h3 className="font-semibold text-foreground lg:text-lg">Join Household</h3>
                   <p className="text-sm text-muted-foreground mt-0.5">
                     Connect with your partner's household
                   </p>
                 </div>
+
                 <ArrowRight className="h-5 w-5 text-muted-foreground" />
               </div>
             </button>
@@ -210,6 +222,7 @@ export default function Onboarding() {
                 >
                   Back
                 </Button>
+
                 <Button type="submit" className="flex-1" disabled={isLoading}>
                   {isLoading ? 'Creating...' : 'Create'}
                 </Button>
@@ -251,6 +264,7 @@ export default function Onboarding() {
                 >
                   Back
                 </Button>
+
                 <Button type="submit" className="flex-1" disabled={isLoading}>
                   {isLoading ? 'Joining...' : 'Join'}
                 </Button>
@@ -268,12 +282,14 @@ export default function Onboarding() {
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
               {successType === 'created' ? 'Household Created!' : 'Welcome to the Household!'}
             </h1>
+
             <p className="text-muted-foreground lg:text-lg mb-8">
               {successType === 'created'
                 ? "You're all set! Share your household ID with your partner so they can join."
                 : "You've successfully joined the household. You can now budget together!"}
             </p>
 
+            {/* Om hushållet skapades visas id:t så att det enkelt kan delas med partnern */}
             {successType === 'created' && (
               <div className="card-elevated p-4 mb-6">
                 <p className="text-xs font-medium text-muted-foreground mb-2">Your Household ID</p>
@@ -296,6 +312,7 @@ export default function Onboarding() {
                   Create Your First Budget
                 </Link>
               </Button>
+
               <Button asChild variant="outline" size="lg" className="w-full">
                 <Link to="/dashboard">
                   Go to Dashboard

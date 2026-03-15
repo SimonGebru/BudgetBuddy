@@ -28,6 +28,7 @@ export async function createHousehold(req, res) {
       ],
     });
 
+    // När hushållet skapats kopplas även användaren till hushållet via user-dokumentet.
     await User.findByIdAndUpdate(req.user._id, { householdId: household._id });
 
     return res.status(201).json({
@@ -84,6 +85,8 @@ export async function joinHousehold(req, res) {
         (entry) => entry.month === currentMonth
       );
 
+      // Om det redan finns en inkomstpost för månaden uppdateras den,
+      // annars läggs en ny post till i historiken.
       if (existingIncomeEntry) {
         existingIncomeEntry.amount = incomeNumber;
       } else {
@@ -95,6 +98,7 @@ export async function joinHousehold(req, res) {
 
       await household.save();
 
+      // Ser till att användaren också är kopplad till hushållet i User-modellen.
       await User.findByIdAndUpdate(req.user._id, { householdId: household._id });
 
       return res.status(200).json({
@@ -148,6 +152,7 @@ export async function getMyHousehold(req, res) {
       });
     }
 
+    // Här formar jag om svaret lite så att frontend får en renare och mer användbar struktur.
     return res.status(200).json({
       household: {
         id: household._id,
@@ -223,6 +228,8 @@ export async function updateMyIncome(req, res) {
       (entry) => entry.month === month
     );
 
+    // Samma tanke här: finns månaden redan så uppdateras posten,
+    // annars skapas en ny post i historiken.
     if (existingIncomeEntry) {
       existingIncomeEntry.amount = incomeNumber;
     } else {

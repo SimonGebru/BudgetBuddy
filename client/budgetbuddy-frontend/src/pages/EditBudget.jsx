@@ -17,6 +17,7 @@ export default function EditBudget() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    // Laddar budgeten för månaden som finns i URL:en.
     if (month) {
       loadBudget();
     }
@@ -24,6 +25,7 @@ export default function EditBudget() {
 
   const loadBudget = async () => {
     setIsLoading(true);
+
     try {
       const data = await getBudgetSummary(month);
       setBudget(data);
@@ -50,12 +52,16 @@ export default function EditBudget() {
 
   const handleSave = async (categories) => {
     setIsSaving(true);
+
     try {
+      // Sparar budgetplanen för vald månad och skickar sedan användaren tillbaka till dashboarden.
       await saveBudgetPlan(month, categories);
+
       toast({
         title: 'Budget saved!',
         description: 'Your budget plan has been updated.',
       });
+
       navigate('/dashboard');
     } catch (error) {
       toast({
@@ -80,9 +86,12 @@ export default function EditBudget() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
+
           <div>
             <h1 className="text-xl font-bold text-foreground">Edit Budget</h1>
-            <p className="text-sm text-muted-foreground">{month && formatMonth(month)}</p>
+            <p className="text-sm text-muted-foreground">
+              {month && formatMonth(month)}
+            </p>
           </div>
         </div>
 

@@ -2,6 +2,7 @@ import BudgetPlan from "../models/BudgetPlan.js";
 import Household from "../models/Household.js";
 
 function roundMoney(n) {
+  // Rundar till heltal så att summor blir enklare att visa och jämföra i budgeten.
   return Math.round(Number(n) || 0);
 }
 
@@ -10,6 +11,8 @@ function getIncomeForMonth(member, month) {
 
   const match = history.find((entry) => entry.month === month);
 
+  // Om det finns ett sparat värde för just den månaden används det,
+  // annars faller vi tillbaka på användarens vanliga månadsinkomst.
   if (match) {
     return Number(match.amount) || 0;
   }
@@ -22,31 +25,31 @@ function calcWeights({ mode, percentMore }, members, month) {
     return [];
   }
 
-  // plocka inkomster
+  // Här plockar jag ut den data som faktiskt behövs för själva fördelningen.
   const incomes = members.map((m) => ({
     userId: m.userId._id?.toString?.() || m.userId.toString(),
     name: m.userId.name,
     monthlyIncome: getIncomeForMonth(m, month),
   }));
 
+  // Equal betyder att alla delar lika mycket oavsett inkomst.
   if (mode === "equal") {
     const w = 1 / incomes.length;
     return incomes.map((p) => ({ ...p, weight: w }));
   }
 
   if (mode === "topEarnsMore") {
-    // B-alternativet: top earner betalar (1 + p) gånger den andra (relativt)
-    // Ex: percentMore=20 -> ratio=1.2
-    // weights: top = ratio/(ratio+1), other = 1/(ratio+1)
+    // Det här läget betyder att den som tjänar mest betalar en viss procent mer än den andra.
+    // Exempel: 20% mer blir ett förhållande på 1.2 mot 1.
     const ratio = 1 + (Number(percentMore) || 0) / 100;
 
-    // hitta top earner baserat på inkomst
+    // Sorterar fram vem som tjänar mest just den här månaden.
     const sorted = [...incomes].sort((a, b) => b.monthlyIncome - a.monthlyIncome);
     const top = sorted[0];
     const other = sorted[1];
 
-    // Om båda tjänar lika mycket ska vi inte välja en "top earner"
-    // utan falla tillbaka till equal
+    // Om båda tjänar lika mycket finns det ingen tydlig "top earner",
+    // så då blir det mer rimligt att falla tillbaka till equal.
     if (top.monthlyIncome === other.monthlyIncome) {
       const w = 1 / incomes.length;
       return incomes.map((p) => ({ ...p, weight: w }));
@@ -55,7 +58,7 @@ function calcWeights({ mode, percentMore }, members, month) {
     const topWeight = ratio / (ratio + 1);
     const otherWeight = 1 / (ratio + 1);
 
-    // returnera i originalordning (samma som members)
+    // Returnerar vikterna i samma ordning som members hade från början.
     return incomes.map((p) => {
       if (p.userId === top.userId) return { ...p, weight: topWeight };
       if (p.userId === other.userId) return { ...p, weight: otherWeight };
@@ -63,10 +66,11 @@ function calcWeights({ mode, percentMore }, members, month) {
     });
   }
 
-  // default: income proportion
+  // Standardläget är att budgeten delas proportionellt efter inkomst.
   const totalIncome = incomes.reduce((sum, p) => sum + p.monthlyIncome, 0);
 
-  // om totalIncome är 0: fallback till equal
+  // Om båda inkomsterna saknas eller blir 0 går det inte att räkna proportioner,
+  // så då kör vi equal istället.
   if (totalIncome <= 0) {
     const w = 1 / incomes.length;
     return incomes.map((p) => ({ ...p, weight: w }));
@@ -90,7 +94,7 @@ export async function upsertBudgetPlan(req, res) {
       return res.status(400).json({ error: "ValidationError", message: "categories must be an array" });
     }
 
-    // städa categories
+    // Städar inkommande kategorier så att bara giltiga värden sparas.
     const cleanedCategories = categories
       .map((c) => ({
         name: String(c.name || "").trim(),
@@ -98,7 +102,7 @@ export async function upsertBudgetPlan(req, res) {
       }))
       .filter((c) => c.name.length > 0 && Number.isFinite(c.amount) && c.amount >= 0);
 
-    // split: default income om inget skickas
+    // Om frontend inte skickar något split-läge används income som standard.
     const mode = split?.mode || "income";
     const percentMore = Number(split?.percentMore || 0);
 
@@ -116,6 +120,8 @@ export async function upsertBudgetPlan(req, res) {
       });
     }
 
+    // findOneAndUpdate + upsert gör att samma endpoint kan användas både för att skapa
+    // en ny budgetplan och uppdatera en befintlig för samma månad.
     const plan = await BudgetPlan.findOneAndUpdate(
       { householdId: req.user.householdId, month },
       {
@@ -165,13 +171,13 @@ export async function getBudgetSummary(req, res) {
 
     const totalBudget = plan.categories.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
 
-    // räkna weights beroende på split-mode
+    // Räknar ut hur stor del varje person ska stå för beroende på valt split-läge.
     const split = plan.split || { mode: "income", percentMore: 0 };
     const peopleWithWeights = calcWeights(split, household.members, month);
 
     const totalIncome = peopleWithWeights.reduce((sum, p) => sum + p.monthlyIncome, 0);
 
-    // totals per person
+    // Bygger en enklare struktur för totalsumman per person.
     const people = peopleWithWeights.map((p) => ({
       userId: p.userId,
       name: p.name,
@@ -180,7 +186,7 @@ export async function getBudgetSummary(req, res) {
       contributionTotal: roundMoney(totalBudget * p.weight),
     }));
 
-    // per category
+    // Räknar även ut fördelning per kategori så att frontend kan visa mer detaljerat vad var och en ska betala.
     const categories = plan.categories.map((cat) => {
       const perPersonRaw = peopleWithWeights.map((p) => ({
         userId: p.userId,
@@ -188,12 +194,13 @@ export async function getBudgetSummary(req, res) {
         amount: roundMoney((Number(cat.amount) || 0) * p.weight),
       }));
 
-      // (valfritt) avrundningsjustering: se till att summan matchar category amount
+      // Efter avrundning kan det skilja någon krona, så här justeras det så att summan
+      // faktiskt matchar kategorins totalbelopp.
       const catAmount = roundMoney(cat.amount);
       const sumRounded = perPersonRaw.reduce((s, x) => s + x.amount, 0);
       const diff = catAmount - sumRounded;
 
-      // lägg diff på personen med störst weight (så det blir stabilt)
+      // Diffen läggs på personen med högst vikt för att få en stabil och förutsägbar fördelning.
       if (diff !== 0) {
         let idx = 0;
         let best = -Infinity;
@@ -217,7 +224,7 @@ export async function getBudgetSummary(req, res) {
     return res.status(200).json({
       householdId: req.user.householdId,
       month: plan.month,
-      split, // så frontend visar “vilket läge”
+      split,
       totalBudget: roundMoney(totalBudget),
       totalIncome: roundMoney(totalIncome),
       people,
@@ -259,6 +266,7 @@ export async function updateBudgetSplit(req, res) {
       }
     }
 
+    // Den här endpointen uppdaterar bara själva fördelningsläget, inte kategorierna i budgeten.
     const plan = await BudgetPlan.findOneAndUpdate(
       { householdId: req.user.householdId, month },
       {

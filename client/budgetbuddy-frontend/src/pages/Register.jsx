@@ -11,6 +11,7 @@ export default function Register() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { setUser } = useAuth();
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,7 +20,8 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // Enkel frontend-validering innan anropet skickas vidare.
     if (!name || !email || !password) {
       toast({
         title: 'Missing fields',
@@ -29,6 +31,7 @@ export default function Register() {
       return;
     }
 
+    // Samma minimikrav som i backend, så att användaren får snabb feedback direkt i UI:t.
     if (password.length < 6) {
       toast({
         title: 'Password too short',
@@ -39,14 +42,21 @@ export default function Register() {
     }
 
     setIsLoading(true);
+
     try {
       const user = await register(name, email, password);
+
+      // Sparar användaren direkt i auth-context efter registrering
+      // så att användaren kan fortsätta flödet utan att logga in igen.
       setUser(user);
 
       toast({
         title: 'Account created!',
         description: 'Welcome to BudgetBuddy.',
       });
+
+      // Efter registrering skickas användaren vidare till onboarding
+      // för att skapa eller gå med i ett hushåll.
       navigate('/onboarding');
     } catch (error) {
       toast({
@@ -107,6 +117,8 @@ export default function Register() {
                   autoComplete="new-password"
                   className="pr-10"
                 />
+
+                {/* Låter användaren visa eller dölja lösenordet i inputfältet */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}

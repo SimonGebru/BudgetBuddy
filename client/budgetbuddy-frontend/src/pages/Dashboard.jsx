@@ -20,12 +20,16 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Laddar om dashboard-datan när användaren byter månad.
     loadBudget();
   }, [month]);
 
   const loadBudget = async () => {
     setIsLoading(true);
+
     try {
+      // Hämtar både budgeten och aktuell användare parallellt
+      // för att slippa vänta på två separata requests efter varandra.
       const [budgetData, userData] = await Promise.all([
         getBudgetSummary(month),
         getCurrentUser(),
@@ -46,13 +50,15 @@ export default function Dashboard() {
 
   const handleSplitChange = async (newSplit) => {
     if (!budget) return;
-    
+
     try {
       await updateSplitMode(month, newSplit);
 
+      // Efter uppdatering hämtas budgeten igen så att UI:t alltid visar backendens senaste uträkning.
       const refreshedBudget = await getBudgetSummary(month);
       setBudget(refreshedBudget);
-      // In real app, we'd recalculate the split from the backend response
+
+      
     } catch (error) {
       toast({
         title: 'Error',

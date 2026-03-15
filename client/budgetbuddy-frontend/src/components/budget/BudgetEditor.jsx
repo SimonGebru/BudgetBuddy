@@ -5,13 +5,15 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 export function BudgetEditor({ categories, onSave, isSaving }) {
+  // Jag skapar en lokal kopia av kategorierna så att användaren kan redigera fritt i formuläret
+  // innan något faktiskt sparas.
   const [items, setItems] = useState(
-  categories.map((c, index) => ({
-    id: c.id || `existing-${index}`,
-    name: c.name,
-    amount: c.amount,
-  }))
-);
+    categories.map((c, index) => ({
+      id: c.id || `existing-${index}`,
+      name: c.name,
+      amount: c.amount,
+    }))
+  );
 
   const addCategory = () => {
     const newCategory = {
@@ -19,6 +21,7 @@ export function BudgetEditor({ categories, onSave, isSaving }) {
       name: '',
       amount: 0,
     };
+
     setItems([...items, newCategory]);
   };
 
@@ -36,10 +39,16 @@ export function BudgetEditor({ categories, onSave, isSaving }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const validCategories = items.filter((item) => item.name.trim() && item.amount > 0);
+
+    // Innan save filtreras tomma eller ogiltiga kategorier bort så att bara riktiga poster skickas vidare.
+    const validCategories = items.filter(
+      (item) => item.name.trim() && item.amount > 0
+    );
+
     onSave(validCategories);
   };
 
+  // Summerar den aktuella budgeten direkt från den lokala staten så att totalen uppdateras live i UI:t.
   const totalAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0);
 
   return (
@@ -55,7 +64,7 @@ export function BudgetEditor({ categories, onSave, isSaving }) {
             style={{ animationDelay: `${index * 30}ms` }}
           >
             <GripVertical className="h-5 w-5 text-muted-foreground/50 flex-shrink-0" />
-            
+
             <div className="flex-1 grid grid-cols-2 gap-3">
               <Input
                 placeholder="Category name"
@@ -72,7 +81,7 @@ export function BudgetEditor({ categories, onSave, isSaving }) {
                 min={0}
               />
             </div>
-            
+
             <Button
               type="button"
               variant="ghost"
@@ -109,7 +118,7 @@ export function BudgetEditor({ categories, onSave, isSaving }) {
             }).format(totalAmount)}
           </span>
         </div>
-        
+
         <Button
           type="submit"
           size="lg"

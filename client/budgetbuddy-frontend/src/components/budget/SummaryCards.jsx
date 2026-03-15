@@ -26,6 +26,7 @@ function SummaryCard({ label, value, icon: Icon, variant = 'default' }) {
           >
             {label}
           </p>
+
           <p
             className={cn(
               'text-lg font-bold tracking-tight',
@@ -65,15 +66,19 @@ function SummaryCard({ label, value, icon: Icon, variant = 'default' }) {
 }
 
 export function SummaryCards({ budget, currentUserId }) {
+  // Plockar ut aktuell användare och partnern från budgetsammanfattningen
+  // så att korten kan visa rätt siffror för båda.
   const currentUser = budget.people.find(
     (p) => String(p.userId) === String(currentUserId)
   );
+
   const partner = budget.people.find(
     (p) => String(p.userId) !== String(currentUserId)
   );
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-4">
+      {/* Visar de viktigaste nyckeltalen för månaden i separata kort */}
       <SummaryCard
         label="Total Budget"
         value={formatCurrency(budget.totalBudget)}

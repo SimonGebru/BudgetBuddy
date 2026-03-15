@@ -33,6 +33,7 @@ async function request(path, options = {}) {
     ...(options.headers || {}),
   };
 
+  // Om användaren är inloggad skickas token med automatiskt i alla requests.
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
@@ -44,6 +45,7 @@ async function request(path, options = {}) {
 
   const data = await response.json().catch(() => ({}));
 
+  // Standardiserad felhantering så att resten av appen kan jobba med vanliga Error-objekt.
   if (!response.ok) {
     throw new Error(data.message || "Something went wrong");
   }
@@ -61,6 +63,8 @@ export async function login(email, password) {
     body: JSON.stringify({ email, password }),
   });
 
+  // Efter lyckad login sparas både token och användardata lokalt
+  // så att sessionen kan återanvändas vid refresh.
   setToken(data.token);
   setStoredUser(data.user);
 
@@ -89,6 +93,7 @@ export async function getCurrentUser() {
     method: "GET",
   });
 
+  // Synkar localStorage med senaste användardatan från backend.
   setStoredUser(data.user);
   return data.user;
 }
@@ -113,6 +118,8 @@ export async function createHousehold(name, monthlyIncome) {
     body: JSON.stringify({ name, monthlyIncome }),
   });
 
+  // När hushållet skapats uppdateras även den sparade användaren lokalt
+  // så att frontend direkt vet att användaren nu tillhör ett hushåll.
   const currentUser = getStoredUser();
   if (currentUser) {
     const updatedUser = {
@@ -172,6 +179,8 @@ export async function getBudgetSummary(month) {
       method: "GET",
     });
   } catch (error) {
+    // Om det ännu inte finns någon budget för månaden returneras en tom standardstruktur
+    // så att frontend kan fortsätta fungera utan att krascha.
     if (error.message === "Budget plan not found for month") {
       return {
         month,
@@ -199,6 +208,8 @@ export async function saveBudgetPlan(
 }
 
 export async function updateSplitMode(month, splitMode) {
+  // Tillåter både att ett helt split-objekt skickas in
+  // eller bara ett strängvärde för mode.
   const split =
     typeof splitMode === "string"
       ? { mode: splitMode, percentMore: 0 }

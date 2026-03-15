@@ -12,6 +12,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, clearAuth, setUser } = useAuth();
+
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
@@ -19,18 +20,23 @@ export default function Settings() {
   const [email, setEmail] = useState('');
 
   useEffect(() => {
+    // Formulärfälten synkas med aktuell användare när sidan laddas
+    // eller när user i auth-context uppdateras.
     setName(user?.name || '');
     setEmail(user?.email || '');
   }, [user]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
+
     try {
       await clearAuth();
+
       toast({
         title: 'Logged out',
         description: 'See you next time!',
       });
+
       navigate('/login');
     } catch (error) {
       toast({
@@ -56,12 +62,14 @@ export default function Settings() {
     }
 
     setIsSavingProfile(true);
+
     try {
       const updatedUser = await updateMe({
         name: name.trim(),
         email: email.trim(),
       });
 
+      // Uppdaterar även auth-context direkt så att resten av appen visar senaste användardatan.
       setUser(updatedUser);
 
       toast({
@@ -96,6 +104,7 @@ export default function Settings() {
                 {displayName.charAt(0).toUpperCase()}
               </span>
             </div>
+
             <div>
               <h2 className="text-lg lg:text-xl font-semibold text-foreground">{displayName}</h2>
               <p className="text-sm lg:text-base text-muted-foreground">{displayEmail}</p>
@@ -145,7 +154,8 @@ export default function Settings() {
         {/* Preferences */}
         <div className="card-elevated p-6">
           <h3 className="font-semibold text-foreground mb-4">Preferences</h3>
-          
+
+          {/* Placeholder för inställningar som finns planerade men ännu inte är aktiverade */}
           <button
             disabled
             className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/30 opacity-60 cursor-not-allowed"

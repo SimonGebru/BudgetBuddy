@@ -19,18 +19,23 @@ import EditBudget from "./pages/EditBudget";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
+// Skapar en gemensam QueryClient för hela appen.
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
+        {/* Toast-komponenter gör att notifieringar kan visas globalt i hela appen */}
         <Toaster />
         <Sonner />
+
         <BrowserRouter>
           <Routes>
+            {/* Publik startsida */}
             <Route path="/" element={<Index />} />
 
+            {/* Dessa routes ska bara vara tillgängliga för användare som inte redan är inloggade */}
             <Route
               path="/login"
               element={
@@ -49,6 +54,7 @@ const App = () => (
               }
             />
 
+            {/* Dessa routes kräver att användaren är autentiserad */}
             <Route
               path="/onboarding"
               element={
@@ -94,6 +100,7 @@ const App = () => (
               }
             />
 
+            {/* Fallback-route för sidor som inte finns */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -15,6 +15,7 @@ const actionTypes = {
 let count = 0
 
 function genId() {
+  // Enkel id-generator för toast-notiser
   count = (count + 1) % Number.MAX_SAFE_INTEGER
   return count.toString();
 }
@@ -22,6 +23,7 @@ function genId() {
 const toastTimeouts = new Map()
 
 const addToRemoveQueue = (toastId) => {
+  // Om toasten redan ligger i kö för borttagning gör vi inget igen.
   if (toastTimeouts.has(toastId)) {
     return
   }
@@ -34,6 +36,7 @@ const addToRemoveQueue = (toastId) => {
     })
   }, TOAST_REMOVE_DELAY)
 
+  // Sparar timeouten så att samma toast inte köas flera gånger.
   toastTimeouts.set(toastId, timeout)
 }
 
@@ -42,6 +45,7 @@ export const reducer = (state, action) => {
     case "ADD_TOAST":
       return {
         ...state,
+        // Nyaste toasten läggs först och vi begränsar samtidigt antalet aktiva toasts.
         toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
       };
 
@@ -65,6 +69,7 @@ export const reducer = (state, action) => {
         })
       }
 
+      // Dismiss stänger toasten direkt i UI:t, men själva borttagningen sker senare via timeout.
       return {
         ...state,
         toasts: state.toasts.map((t) =>
@@ -76,6 +81,7 @@ export const reducer = (state, action) => {
             : t),
       };
     }
+
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
         return {
@@ -83,6 +89,7 @@ export const reducer = (state, action) => {
           toasts: [],
         }
       }
+
       return {
         ...state,
         toasts: state.toasts.filter((t) => t.id !== action.toastId),
@@ -92,10 +99,13 @@ export const reducer = (state, action) => {
 
 const listeners = []
 
+// Enkel global minnesstate så att toast-systemet kan användas utan separat context/provider.
 let memoryState = { toasts: [] }
 
 function dispatch(action) {
   memoryState = reducer(memoryState, action)
+
+  // Alla komponenter som använder useToast får uppdaterad state när dispatch körs.
   listeners.forEach((listener) => {
     listener(memoryState)
   })
@@ -111,6 +121,7 @@ function toast({
       type: "UPDATE_TOAST",
       toast: { ...props, id },
     })
+
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
 
   dispatch({
@@ -119,6 +130,7 @@ function toast({
       ...props,
       id,
       open: true,
+      // När toast-komponenten stängs från UI:t synkas det tillbaka hit.
       onOpenChange: (open) => {
         if (!open) dismiss()
       },
@@ -136,7 +148,9 @@ function useToast() {
   const [state, setState] = React.useState(memoryState)
 
   React.useEffect(() => {
+    // Registrerar komponentens setState som lyssnare på den globala toast-staten.
     listeners.push(setState)
+
     return () => {
       const index = listeners.indexOf(setState)
       if (index > -1) {

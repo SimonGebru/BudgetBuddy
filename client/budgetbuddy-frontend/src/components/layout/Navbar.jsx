@@ -2,6 +2,8 @@ import { useLocation, Link } from 'react-router-dom';
 import { LayoutDashboard, Settings, Home, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Samma navigationsstruktur som i DesktopSidebar.
+// Definieras som en lista så att menyn kan renderas dynamiskt.
 const navItems = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/household', label: 'Household', icon: Users },
@@ -13,10 +15,14 @@ export function Navbar() {
   const location = useLocation();
 
   return (
+    // Fast mobilnavigation som ligger längst ner på skärmen
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-pb">
       <div className="max-w-lg mx-auto flex items-center justify-around py-2">
         {navItems.map(({ path, label, icon: Icon }) => {
+          // Avgör om länken motsvarar aktuell route
+          // för att kunna markera den visuellt.
           const isActive = location.pathname === path;
+
           return (
             <Link
               key={path}
@@ -28,7 +34,14 @@ export function Navbar() {
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <Icon className={cn('h-5 w-5', isActive && 'stroke-[2.5]')} />
+              <Icon
+                className={cn(
+                  'h-5 w-5',
+                  // Aktiv ikon görs lite tjockare för tydligare markering
+                  isActive && 'stroke-[2.5]'
+                )}
+              />
+
               <span className="text-xs font-medium">{label}</span>
             </Link>
           );

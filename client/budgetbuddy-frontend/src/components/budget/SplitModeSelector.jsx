@@ -2,6 +2,8 @@ import { Scale, Percent, Crown, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
 
+// Tillgängliga sätt att dela upp budgeten.
+// Varje mode används senare i backend-logiken när bidrag per person räknas ut.
 const modes = [
   { value: 'income', label: 'Income', icon: Scale },
   { value: 'equal', label: '50/50', icon: Percent },
@@ -12,6 +14,8 @@ export function SplitModeSelector({ split, onChange }) {
   const percentMore = split?.percentMore ?? 0;
 
   const handleModeChange = (mode) => {
+    // När mode ändras skickas den nya split-konfigurationen upp till parent.
+    // percentMore används bara när topEarnsMore är aktivt.
     onChange({
       mode,
       percentMore: mode === 'topEarnsMore' ? percentMore : 0,
@@ -19,7 +23,9 @@ export function SplitModeSelector({ split, onChange }) {
   };
 
   const handlePercentChange = (values) => {
+    // Slidern returnerar alltid en array, därför plockas första värdet ut.
     const newPercent = values[0];
+
     onChange({
       mode: 'topEarnsMore',
       percentMore: newPercent,
@@ -32,10 +38,11 @@ export function SplitModeSelector({ split, onChange }) {
         <h3 className="section-title mb-0">Split Mode</h3>
       </div>
       
-      {/* Segmented Control */}
+      {/* Segmented Control där användaren väljer hur budgeten ska delas */}
       <div className="flex bg-muted p-1 rounded-xl gap-1 lg:max-w-md">
         {modes.map(({ value, label, icon: Icon }) => {
           const isActive = split.mode === value;
+
           return (
             <button
               key={value}
@@ -54,7 +61,7 @@ export function SplitModeSelector({ split, onChange }) {
         })}
       </div>
 
-      {/* Mode Description */}
+      {/* Kort beskrivning av vad det valda läget innebär */}
       <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg lg:max-w-lg">
         <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
         <p>
@@ -64,13 +71,14 @@ export function SplitModeSelector({ split, onChange }) {
         </p>
       </div>
 
-      {/* Top Earner Slider */}
+      {/* Om topEarnsMore är valt visas även slider för att justera procenten */}
       {split.mode === 'topEarnsMore' && (
         <div className="card-elevated p-4 space-y-4 lg:max-w-md">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Extra percentage</span>
             <span className="text-lg font-bold text-primary">+{percentMore}%</span>
           </div>
+
           <Slider
             value={[percentMore]}
             onValueChange={handlePercentChange}
@@ -79,6 +87,7 @@ export function SplitModeSelector({ split, onChange }) {
             step={5}
             className="py-2"
           />
+
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>0%</span>
             <span>50%</span>
