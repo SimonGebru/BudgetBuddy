@@ -119,11 +119,17 @@ export function BudgetEditor({ categories, onSave, isSaving }) {
           </span>
         </div>
 
+        {items.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            No categories added. Saving now will leave this month without a budget plan.
+          </p>
+        )}
+
         <Button
           type="submit"
           size="lg"
           className="w-full"
-          disabled={isSaving || items.length === 0}
+          disabled={isSaving}
         >
           {isSaving ? 'Saving...' : 'Save Budget Plan'}
         </Button>

@@ -1,3 +1,5 @@
+// Denna fil är för att definiera Transaction-modellen i Mongoose. Just nu är det bara en skiss på hur den kan se ut, baserat på de fält jag tror att jag kommer behöva när jag implementerar transaktionshantering. (Nice to have)
+
 import mongoose from "mongoose";
 
 const transactionSchema = new mongoose.Schema(

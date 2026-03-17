@@ -25,6 +25,17 @@ function removeStoredUser() {
   localStorage.removeItem("user");
 }
 
+// Hämtar användarens default split mode från localStorage
+function getDefaultSplitFromUser() {
+  const user = getStoredUser();
+  const mode = user?.defaultSplitMode || "equal";
+
+  return {
+    mode,
+    percentMore: 0,
+  };
+}
+
 async function request(path, options = {}) {
   const token = getToken();
 
@@ -63,8 +74,6 @@ export async function login(email, password) {
     body: JSON.stringify({ email, password }),
   });
 
-  // Efter lyckad login sparas både token och användardata lokalt
-  // så att sessionen kan återanvändas vid refresh.
   setToken(data.token);
   setStoredUser(data.user);
 
@@ -93,7 +102,6 @@ export async function getCurrentUser() {
     method: "GET",
   });
 
-  // Synkar localStorage med senaste användardatan från backend.
   setStoredUser(data.user);
   return data.user;
 }
@@ -118,8 +126,6 @@ export async function createHousehold(name, monthlyIncome) {
     body: JSON.stringify({ name, monthlyIncome }),
   });
 
-  // När hushållet skapats uppdateras även den sparade användaren lokalt
-  // så att frontend direkt vet att användaren nu tillhör ett hushåll.
   const currentUser = getStoredUser();
   if (currentUser) {
     const updatedUser = {
@@ -180,11 +186,10 @@ export async function getBudgetSummary(month) {
     });
   } catch (error) {
     // Om det ännu inte finns någon budget för månaden returneras en tom standardstruktur
-    // så att frontend kan fortsätta fungera utan att krascha.
     if (error.message === "Budget plan not found for month") {
       return {
         month,
-        split: { mode: "income", percentMore: 0 },
+        split: getDefaultSplitFromUser(),
         totalBudget: 0,
         totalIncome: 0,
         people: [],
@@ -199,7 +204,7 @@ export async function getBudgetSummary(month) {
 export async function saveBudgetPlan(
   month,
   categories,
-  split = { mode: "income", percentMore: 0 }
+  split = getDefaultSplitFromUser()
 ) {
   return request("/budget/plans", {
     method: "POST",
@@ -208,8 +213,6 @@ export async function saveBudgetPlan(
 }
 
 export async function updateSplitMode(month, splitMode) {
-  // Tillåter både att ett helt split-objekt skickas in
-  // eller bara ett strängvärde för mode.
   const split =
     typeof splitMode === "string"
       ? { mode: splitMode, percentMore: 0 }

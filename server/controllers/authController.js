@@ -50,6 +50,7 @@ export async function register(req, res) {
         name: user.name,
         email: user.email,
         householdId: user.householdId,
+        defaultSplitMode: user.defaultSplitMode,
       },
       token,
     });
@@ -101,6 +102,7 @@ export async function login(req, res) {
         name: user.name,
         email: user.email,
         householdId: user.householdId,
+        defaultSplitMode: user.defaultSplitMode,
       },
       token,
     });
@@ -118,6 +120,7 @@ export async function me(req, res) {
         name: req.user.name,
         email: req.user.email,
         householdId: req.user.householdId,
+        defaultSplitMode: req.user.defaultSplitMode,
       },
     });
   } catch (err) {

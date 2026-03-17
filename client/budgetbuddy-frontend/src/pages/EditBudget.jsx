@@ -30,21 +30,11 @@ export default function EditBudget() {
       const data = await getBudgetSummary(month);
       setBudget(data);
     } catch (error) {
-      // Om ingen budget finns ännu för månaden,
-      // starta med tom kategori-lista istället för att visa error
-      if (error.message === 'Budget plan not found for month') {
-        setBudget({
-          month,
-          categories: [],
-          split: { mode: 'income', percentMore: 0 },
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to load budget data.',
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Error',
+        description: 'Failed to load budget data.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }

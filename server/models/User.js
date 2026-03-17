@@ -26,6 +26,13 @@ const userSchema = new mongoose.Schema(
       ref: "Household",
       default: null,
     },
+
+    // Standardval för hur kostnader ska delas i appen
+    defaultSplitMode: {
+      type: String,
+      enum: ["income", "equal", "topEarnsMore"],
+      default: "equal",
+    },
   },
   { timestamps: true }
 );

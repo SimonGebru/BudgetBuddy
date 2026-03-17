@@ -1,3 +1,6 @@
+// Denna controller är för senare användning när jag implementerar transaktionshantering. För nu är det bara en skiss på hur det kan se ut. (Nice to have)
+
+
 import Transaction from "../models/Transaction.js";
 
 /**

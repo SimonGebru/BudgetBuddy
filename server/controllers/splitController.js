@@ -1,0 +1,1 @@
+// Förberett denna för att hantera transaktioner i framtiden. Just nu är det bara en skiss på hur det kan se ut. (Nice to have)
