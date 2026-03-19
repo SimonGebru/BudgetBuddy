@@ -12,12 +12,24 @@ import { getBudgetSummary, updateSplitMode, getCurrentUser } from '@/services/ap
 import { getCurrentMonth } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
 
+const DASHBOARD_MONTH_STORAGE_KEY = 'budgetbuddy-selected-month';
+
 export default function Dashboard() {
   const { toast } = useToast();
-  const [month, setMonth] = useState(getCurrentMonth());
+
+  const [month, setMonth] = useState(() => {
+    return localStorage.getItem(DASHBOARD_MONTH_STORAGE_KEY) || getCurrentMonth();
+  });
+
   const [budget, setBudget] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Sparar den valda månaden så att användaren stannar kvar på samma månad
+    // även efter refresh eller om sidan öppnas igen.
+    localStorage.setItem(DASHBOARD_MONTH_STORAGE_KEY, month);
+  }, [month]);
 
   useEffect(() => {
     // Laddar om dashboard-datan när användaren byter månad.
@@ -57,8 +69,6 @@ export default function Dashboard() {
       // Efter uppdatering hämtas budgeten igen så att UI:t alltid visar backendens senaste uträkning.
       const refreshedBudget = await getBudgetSummary(month);
       setBudget(refreshedBudget);
-
-      
     } catch (error) {
       toast({
         title: 'Error',

@@ -201,6 +201,14 @@ export async function getBudgetSummary(month) {
   }
 }
 
+export async function getBudgetHistory() {
+  const data = await request("/budget/history", {
+    method: "GET",
+  });
+
+  return data.history;
+}
+
 export async function saveBudgetPlan(
   month,
   categories,

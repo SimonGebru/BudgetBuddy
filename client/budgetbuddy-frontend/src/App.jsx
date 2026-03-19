@@ -18,6 +18,7 @@ import Dashboard from "./pages/Dashboard";
 import EditBudget from "./pages/EditBudget";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Home from "./pages/Home";
 
 // Skapar en gemensam QueryClient för hela appen.
 const queryClient = new QueryClient();
@@ -60,6 +61,15 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Onboarding />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/home"
+              element={
+                <ProtectedRoute>
+                  <Home />
                 </ProtectedRoute>
               }
             />

@@ -4,12 +4,16 @@ import {
   upsertBudgetPlan,
   getBudgetSummary,
   updateBudgetSplit,
+  getBudgetHistory,
 } from "../controllers/budgetController.js";
 
 const router = Router();
 
 // skydda alla budget-routes
 router.use(requireAuth);
+
+// Hämta historik/statistik för flera månader
+router.get("/history", getBudgetHistory);
 
 // Skapa / uppdatera budgetplan för en månad
 router.post("/plans", upsertBudgetPlan);

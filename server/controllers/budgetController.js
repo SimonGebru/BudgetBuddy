@@ -295,3 +295,81 @@ export async function updateBudgetSplit(req, res) {
     });
   }
 }
+
+export async function getBudgetHistory(req, res) {
+  try {
+    const plans = await BudgetPlan.find({
+      householdId: req.user.householdId,
+    })
+      .sort({ month: 1 })
+      .exec();
+
+    if (!plans.length) {
+      return res.status(200).json({
+        history: [],
+      });
+    }
+
+    const household = await Household.findById(req.user.householdId)
+      .populate("members.userId", "name")
+      .exec();
+
+    if (!household) {
+      return res.status(404).json({
+        error: "NotFound",
+        message: "Household not found",
+      });
+    }
+
+    if (!household.members || household.members.length < 2) {
+      return res.status(400).json({
+        error: "ValidationError",
+        message: "At least two household members are required",
+      });
+    }
+
+    const history = plans.map((plan) => {
+      const totalBudget = plan.categories.reduce(
+        (sum, c) => sum + (Number(c.amount) || 0),
+        0
+      );
+
+      const split = plan.split || { mode: "income", percentMore: 0 };
+      const peopleWithWeights = calcWeights(split, household.members, plan.month);
+
+      const people = peopleWithWeights.map((p) => ({
+        userId: p.userId,
+        name: p.name,
+        monthlyIncome: p.monthlyIncome,
+        contributionTotal: roundMoney(totalBudget * p.weight),
+      }));
+
+      const currentUser = people.find(
+        (person) => String(person.userId) === String(req.user._id)
+      );
+
+      const partner = people.find(
+        (person) => String(person.userId) !== String(req.user._id)
+      );
+
+      return {
+        month: plan.month,
+        totalBudget: roundMoney(totalBudget),
+        yourShare: currentUser?.contributionTotal || 0,
+        partnerShare: partner?.contributionTotal || 0,
+        yourIncome: currentUser?.monthlyIncome || 0,
+        partnerIncome: partner?.monthlyIncome || 0,
+        splitMode: split.mode,
+      };
+    });
+
+    return res.status(200).json({
+      history,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: "ServerError",
+      message: err.message,
+    });
+  }
+}

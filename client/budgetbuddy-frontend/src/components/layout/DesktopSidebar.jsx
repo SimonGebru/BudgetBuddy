@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 // Lista över alla navigationselement som ska visas i sidomenyn.
 // Genom att definiera dem här kan vi enkelt rendera menyn dynamiskt.
 const navItems = [
-  { path: '/', label: 'Home', icon: Home },
+  { path: '/home', label: 'Home', icon: Home },
   { path: '/household', label: 'Household', icon: Users },
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/settings', label: 'Settings', icon: Settings },
@@ -18,7 +18,7 @@ export function DesktopSidebar() {
     <aside className="w-64 min-h-screen border-r border-border bg-card flex flex-col">
       {/* Logo / App branding */}
       <div className="p-6 border-b border-border">
-        <Link to="/dashboard" className="flex items-center gap-3">
+        <Link to="/home" className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
             <Wallet className="h-5 w-5 text-primary-foreground" />
           </div>
@@ -32,7 +32,7 @@ export function DesktopSidebar() {
           {navItems.map(({ path, label, icon: Icon }) => {
             // Kontrollerar om den aktuella sidan matchar länken
             // för att kunna markera den som aktiv i UI:t.
-            const isActive = location.pathname === path;
+            const isActive = location.pathname.startsWith(path);
 
             return (
               <li key={path}>
