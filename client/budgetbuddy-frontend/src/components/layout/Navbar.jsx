@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 // Samma navigationsstruktur som i DesktopSidebar.
 // Definieras som en lista så att menyn kan renderas dynamiskt.
 const navItems = [
-  { path: '/', label: 'Home', icon: Home },
+  { path: '/home', label: 'Home', icon: Home },
   { path: '/household', label: 'Household', icon: Users },
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/settings', label: 'Settings', icon: Settings },

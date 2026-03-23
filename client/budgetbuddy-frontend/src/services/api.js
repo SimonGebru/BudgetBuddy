@@ -160,6 +160,23 @@ export async function joinHousehold(householdId, monthlyIncome) {
   return data;
 }
 
+export async function leaveHousehold() {
+  const data = await request("/household/leave", {
+    method: "POST",
+  });
+
+  const currentUser = getStoredUser();
+  if (currentUser) {
+    const updatedUser = {
+      ...currentUser,
+      householdId: null,
+    };
+    setStoredUser(updatedUser);
+  }
+
+  return data;
+}
+
 export async function getMyHousehold() {
   const data = await request("/household/me", {
     method: "GET",

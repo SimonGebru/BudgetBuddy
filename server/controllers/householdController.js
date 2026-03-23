@@ -258,3 +258,56 @@ export async function updateMyIncome(req, res) {
     });
   }
 }
+/**
+ * POST /household/leave
+ * Låter inloggad användare lämna sitt nuvarande hushåll
+ */
+export async function leaveHousehold(req, res) {
+  try {
+    if (!req.user.householdId) {
+      return res.status(400).json({
+        error: "ValidationError",
+        message: "User is not connected to a household",
+      });
+    }
+
+    const household = await Household.findById(req.user.householdId);
+
+    if (!household) {
+      await User.findByIdAndUpdate(req.user._id, { householdId: null });
+
+      return res.status(404).json({
+        error: "NotFound",
+        message: "Household not found",
+      });
+    }
+
+    // Tar bort den inloggade användaren från members-listan.
+    household.members = household.members.filter(
+      (member) => String(member.userId) !== String(req.user._id)
+    );
+
+    // Kopplar bort användaren från hushållet i User-modellen.
+    await User.findByIdAndUpdate(req.user._id, { householdId: null });
+
+    // Om ingen medlem finns kvar tas hela hushållet bort.
+    if (household.members.length === 0) {
+      await Household.findByIdAndDelete(household._id);
+
+      return res.status(200).json({
+        message: "You left the household. Household was deleted because no members remained.",
+      });
+    }
+
+    await household.save();
+
+    return res.status(200).json({
+      message: "You left the household successfully.",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: "ServerError",
+      message: err.message,
+    });
+  }
+}

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Copy, Home, Users, Save } from "lucide-react";
+import { Copy, Home, Users, Save, LogOut } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getCurrentUser, getMyHousehold, updateMyIncome } from "@/services/api";
+import { getCurrentUser, getMyHousehold, updateMyIncome, leaveHousehold } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
 function getCurrentMonth() {
@@ -35,6 +35,7 @@ export default function Household() {
   const [myIncome, setMyIncome] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingIncome, setIsSavingIncome] = useState(false);
+  const [isLeavingHousehold, setIsLeavingHousehold] = useState(false);
 
   useEffect(() => {
     const loadHousehold = async () => {
@@ -135,6 +136,35 @@ export default function Household() {
     }
   };
 
+  const handleLeaveHousehold = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to leave this household?"
+    );
+
+    if (!confirmed) return;
+
+    setIsLeavingHousehold(true);
+
+    try {
+      const result = await leaveHousehold();
+
+      toast({
+        title: "Household updated",
+        description: result.message || "You have left the household.",
+      });
+
+      navigate("/onboarding");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message || "Could not leave the household.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLeavingHousehold(false);
+    }
+  };
+
   const membersWithSelectedMonthIncome = useMemo(() => {
     if (!household) return [];
 
@@ -179,6 +209,18 @@ export default function Household() {
 
                 <Button variant="outline" size="icon" onClick={handleCopyId}>
                   <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  onClick={handleLeaveHousehold}
+                  disabled={isLeavingHousehold}
+                  className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  {isLeavingHousehold ? "Leaving..." : "Leave Household"}
                 </Button>
               </div>
             </div>

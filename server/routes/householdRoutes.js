@@ -5,6 +5,7 @@ import {
   joinHousehold,
   getMyHousehold,
   updateMyIncome,
+  leaveHousehold,
 } from "../controllers/householdController.js";
 
 const router = Router();
@@ -15,5 +16,6 @@ router.get("/me", getMyHousehold);
 router.post("/create", createHousehold);
 router.post("/join", joinHousehold);
 router.patch("/income", updateMyIncome);
+router.post("/leave", leaveHousehold);
 
 export default router;
