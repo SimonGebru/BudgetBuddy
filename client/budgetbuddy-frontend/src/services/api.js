@@ -44,21 +44,37 @@ async function request(path, options = {}) {
     ...(options.headers || {}),
   };
 
-  // Om användaren är inloggad skickas token med automatiskt i alla requests.
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers,
+    signal: controller.signal,
   });
 
-  const data = await response.json().catch(() => ({}));
+  clearTimeout(timeout);
 
-  // Standardiserad felhantering så att resten av appen kan jobba med vanliga Error-objekt.
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (response.status === 401) {
+    removeToken();
+    removeStoredUser();
+  }
+
   if (!response.ok) {
-    throw new Error(data.message || "Something went wrong");
+    const error = new Error(data.message || "Something went wrong");
+    error.status = response.status;
+    throw error;
   }
 
   return data;

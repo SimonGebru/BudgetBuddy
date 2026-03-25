@@ -11,25 +11,29 @@ const modes = [
 ];
 
 export function SplitModeSelector({ split, onChange }) {
+  const mode = split?.mode || 'income';
   const percentMore = split?.percentMore ?? 0;
 
-  const handleModeChange = (mode) => {
-    // När mode ändras skickas den nya split-konfigurationen upp till parent.
-    // percentMore används bara när topEarnsMore är aktivt.
-    onChange({
-      mode,
-      percentMore: mode === 'topEarnsMore' ? percentMore : 0,
+  const handleModeChange = (newMode) => {
+    onChange?.({
+      mode: newMode,
+      percentMore: newMode === 'topEarnsMore' ? percentMore : 0,
     });
   };
 
   const handlePercentChange = (values) => {
-    // Slidern returnerar alltid en array, därför plockas första värdet ut.
     const newPercent = values[0];
 
-    onChange({
+    onChange?.({
       mode: 'topEarnsMore',
       percentMore: newPercent,
     });
+  };
+
+  const descriptions = {
+    income: 'Each person pays proportionally to their income.',
+    equal: 'Both pay exactly 50% of all expenses.',
+    topEarnsMore: `The higher earner pays ${percentMore}% more than the other person.`,
   };
 
   return (
@@ -37,11 +41,10 @@ export function SplitModeSelector({ split, onChange }) {
       <div className="flex items-center gap-2">
         <h3 className="section-title mb-0">Split Mode</h3>
       </div>
-      
-      {/* Segmented Control där användaren väljer hur budgeten ska delas */}
+
       <div className="flex bg-muted p-1 rounded-xl gap-1 lg:max-w-md">
         {modes.map(({ value, label, icon: Icon }) => {
-          const isActive = split.mode === value;
+          const isActive = mode === value;
 
           return (
             <button
@@ -61,18 +64,12 @@ export function SplitModeSelector({ split, onChange }) {
         })}
       </div>
 
-      {/* Kort beskrivning av vad det valda läget innebär */}
       <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg lg:max-w-lg">
         <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-        <p>
-          {split.mode === 'income' && 'Each person pays proportionally to their income.'}
-          {split.mode === 'equal' && 'Both pay exactly 50% of all expenses.'}
-          {split.mode === 'topEarnsMore' && `The higher earner pays ${percentMore}% more than the other person.`}
-        </p>
+        <p>{descriptions[mode]}</p>
       </div>
 
-      {/* Om topEarnsMore är valt visas även slider för att justera procenten */}
-      {split.mode === 'topEarnsMore' && (
+      {mode === 'topEarnsMore' && (
         <div className="card-elevated p-4 space-y-4 lg:max-w-md">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Extra percentage</span>

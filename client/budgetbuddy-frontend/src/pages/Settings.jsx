@@ -8,6 +8,24 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { updateMe } from '@/services/api';
 
+const splitModeOptions = [
+  {
+    value: 'income',
+    label: 'Income',
+    description: 'Split based on income',
+  },
+  {
+    value: 'equal',
+    label: '50/50',
+    description: 'Split equally',
+  },
+  {
+    value: 'topEarnsMore',
+    label: 'Top +%',
+    description: 'Higher earner pays more',
+  },
+];
+
 export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -18,7 +36,6 @@ export default function Settings() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-
   const [defaultSplitMode, setDefaultSplitMode] = useState('equal');
 
   useEffect(() => {
@@ -156,75 +173,38 @@ export default function Settings() {
         </div>
 
         {/* Preferences */}
-<div className="card-elevated p-6">
-  <h3 className="font-semibold text-foreground mb-4">Preferences</h3>
+        <div className="card-elevated p-6">
+          <h3 className="font-semibold text-foreground mb-4">Preferences</h3>
 
-  <div className="space-y-3">
-    <label className="input-label">Default Split Mode</label>
+          <div className="space-y-3">
+            <label className="input-label">Default Split Mode</label>
 
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-      <button
-        type="button"
-        onClick={() => setDefaultSplitMode('income')}
-        className={`rounded-lg border p-3 text-left transition ${
-          defaultSplitMode === 'income'
-            ? 'border-primary bg-primary/10'
-            : 'border-border bg-background hover:bg-muted/50'
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          <SettingsIcon className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <p className="font-medium text-foreground">Income</p>
-            <p className="text-sm text-muted-foreground">
-              Split based on income
-            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {splitModeOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setDefaultSplitMode(option.value)}
+                  className={`rounded-lg border p-3 text-left transition ${
+                    defaultSplitMode === option.value
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border bg-background hover:bg-muted/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <SettingsIcon className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium text-foreground">{option.label}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {option.description}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setDefaultSplitMode('equal')}
-        className={`rounded-lg border p-3 text-left transition ${
-          defaultSplitMode === 'equal'
-            ? 'border-primary bg-primary/10'
-            : 'border-border bg-background hover:bg-muted/50'
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          <SettingsIcon className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <p className="font-medium text-foreground">50/50</p>
-            <p className="text-sm text-muted-foreground">
-              Split equally
-            </p>
-          </div>
-        </div>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setDefaultSplitMode('topEarnsMore')}
-        className={`rounded-lg border p-3 text-left transition ${
-          defaultSplitMode === 'topEarnsMore'
-            ? 'border-primary bg-primary/10'
-            : 'border-border bg-background hover:bg-muted/50'
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          <SettingsIcon className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <p className="font-medium text-foreground">Top +%</p>
-            <p className="text-sm text-muted-foreground">
-              Higher earner pays more
-            </p>
-          </div>
-        </div>
-      </button>
-    </div>
-  </div>
-</div>
 
         {/* Logout */}
         <Button

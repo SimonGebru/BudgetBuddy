@@ -8,7 +8,6 @@ function SummaryCard({ label, value, icon: Icon, variant = 'default' }) {
       className={cn(
         'card-elevated p-4 animate-fade-in',
         variant === 'primary' && 'bg-primary text-primary-foreground',
-        variant === 'accent' && 'bg-secondary',
         variant === 'mine' && 'bg-emerald-50 border border-emerald-200'
       )}
     >
@@ -42,8 +41,6 @@ function SummaryCard({ label, value, icon: Icon, variant = 'default' }) {
             'p-2 rounded-lg',
             variant === 'primary'
               ? 'bg-primary-foreground/20'
-              : variant === 'accent'
-              ? 'bg-primary/10'
               : variant === 'mine'
               ? 'bg-emerald-100'
               : 'bg-muted'
@@ -66,15 +63,25 @@ function SummaryCard({ label, value, icon: Icon, variant = 'default' }) {
 }
 
 export function SummaryCards({ budget, currentUserId }) {
+  const people = budget.people || [];
+
   // Plockar ut aktuell användare och partnern från budgetsammanfattningen
   // så att korten kan visa rätt siffror för båda.
-  const currentUser = budget.people.find(
-    (p) => String(p.userId) === String(currentUserId)
+  const currentUser = people.find(
+    (person) => String(person.userId) === String(currentUserId)
   );
 
-  const partner = budget.people.find(
-    (p) => String(p.userId) !== String(currentUserId)
+  const partner = people.find(
+    (person) => String(person.userId) !== String(currentUserId)
   );
+
+  const partnerIncomeLabel = partner?.name
+    ? `${partner.name}'s Income`
+    : 'Partner Income';
+
+  const partnerShareLabel = partner?.name
+    ? `${partner.name}'s Share`
+    : 'Partner Share';
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-4">
@@ -100,7 +107,7 @@ export function SummaryCards({ budget, currentUserId }) {
       />
 
       <SummaryCard
-        label="Partner Income"
+        label={partnerIncomeLabel}
         value={formatCurrency(partner?.monthlyIncome || 0)}
         icon={Users}
       />
@@ -113,7 +120,7 @@ export function SummaryCards({ budget, currentUserId }) {
       />
 
       <SummaryCard
-        label="Partner Share"
+        label={partnerShareLabel}
         value={formatCurrency(partner?.contributionTotal || 0)}
         icon={Users}
       />

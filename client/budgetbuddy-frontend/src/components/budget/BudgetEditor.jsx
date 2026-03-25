@@ -1,19 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+
+function formatSek(value) {
+  return new Intl.NumberFormat('sv-SE', {
+    style: 'currency',
+    currency: 'SEK',
+    minimumFractionDigits: 0,
+  }).format(value);
+}
+
+function mapCategoriesToItems(categories) {
+  return categories.map((category, index) => ({
+    id: category.id || `existing-${index}`,
+    name: category.name,
+    amount: Number(category.amount) || 0,
+  }));
+}
 
 export function BudgetEditor({ categories, onSave, isSaving }) {
   // Jag skapar en lokal kopia av kategorierna så att användaren kan redigera fritt i formuläret
   // innan något faktiskt sparas.
-  const [items, setItems] = useState(
-    categories.map((c, index) => ({
-      id: c.id || `existing-${index}`,
-      name: c.name,
-      amount: c.amount,
-    }))
-  );
+  const [items, setItems] = useState(() => mapCategoriesToItems(categories));
+
+  useEffect(() => {
+    // Om parent skickar in nya kategorier synkas de till den lokala staten.
+    setItems(mapCategoriesToItems(categories));
+  }, [categories]);
 
   const addCategory = () => {
     const newCategory = {
@@ -22,16 +36,16 @@ export function BudgetEditor({ categories, onSave, isSaving }) {
       amount: 0,
     };
 
-    setItems([...items, newCategory]);
+    setItems((prev) => [...prev, newCategory]);
   };
 
   const removeCategory = (id) => {
-    setItems(items.filter((item) => item.id !== id));
+    setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
   const updateCategory = (id, field, value) => {
-    setItems(
-      items.map((item) =>
+    setItems((prev) =>
+      prev.map((item) =>
         item.id === id ? { ...item, [field]: value } : item
       )
     );
@@ -42,14 +56,17 @@ export function BudgetEditor({ categories, onSave, isSaving }) {
 
     // Innan save filtreras tomma eller ogiltiga kategorier bort så att bara riktiga poster skickas vidare.
     const validCategories = items.filter(
-      (item) => item.name.trim() && item.amount > 0
+      (item) => item.name.trim() && Number(item.amount) > 0
     );
 
     onSave(validCategories);
   };
 
   // Summerar den aktuella budgeten direkt från den lokala staten så att totalen uppdateras live i UI:t.
-  const totalAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0);
+  const totalAmount = items.reduce(
+    (sum, item) => sum + (Number(item.amount) || 0),
+    0
+  );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -58,9 +75,7 @@ export function BudgetEditor({ categories, onSave, isSaving }) {
         {items.map((item, index) => (
           <div
             key={item.id}
-            className={cn(
-              'card-elevated p-4 flex items-center gap-3 animate-scale-in'
-            )}
+            className="card-elevated p-4 flex items-center gap-3 animate-scale-in"
             style={{ animationDelay: `${index * 30}ms` }}
           >
             <GripVertical className="h-5 w-5 text-muted-foreground/50 flex-shrink-0" />
@@ -76,7 +91,9 @@ export function BudgetEditor({ categories, onSave, isSaving }) {
                 type="number"
                 placeholder="Amount"
                 value={item.amount || ''}
-                onChange={(e) => updateCategory(item.id, 'amount', Number(e.target.value))}
+                onChange={(e) =>
+                  updateCategory(item.id, 'amount', Number(e.target.value))
+                }
                 className="h-10"
                 min={0}
               />
@@ -111,11 +128,7 @@ export function BudgetEditor({ categories, onSave, isSaving }) {
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Total Budget</span>
           <span className="text-xl font-bold text-primary">
-            {new Intl.NumberFormat('sv-SE', {
-              style: 'currency',
-              currency: 'SEK',
-              minimumFractionDigits: 0,
-            }).format(totalAmount)}
+            {formatSek(totalAmount)}
           </span>
         </div>
 

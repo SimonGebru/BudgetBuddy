@@ -4,7 +4,12 @@ import { Copy, Home, Users, Save, LogOut } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getCurrentUser, getMyHousehold, updateMyIncome, leaveHousehold } from "@/services/api";
+import {
+  getCurrentUser,
+  getMyHousehold,
+  updateMyIncome,
+  leaveHousehold,
+} from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
 function getCurrentMonth() {
@@ -37,41 +42,43 @@ export default function Household() {
   const [isSavingIncome, setIsSavingIncome] = useState(false);
   const [isLeavingHousehold, setIsLeavingHousehold] = useState(false);
 
-  useEffect(() => {
-    const loadHousehold = async () => {
-      try {
-        const user = await getCurrentUser();
+  const loadHousehold = async () => {
+    setIsLoading(true);
 
-        // Om användaren inte är kopplad till något hushåll
-        // skickas den vidare till onboarding-flödet.
-        if (!user?.householdId) {
-          navigate("/onboarding");
-          return;
-        }
+    try {
+      const user = await getCurrentUser();
 
-        const data = await getMyHousehold();
-        setCurrentUser(user);
-        setHousehold(data);
-
-        const me = data.members.find(
-          (member) => String(member.userId) === String(user.id)
-        );
-
-        // Förifyller användarens inkomst för vald månad när datan laddats in.
-        if (me) {
-          setMyIncome(String(getIncomeForMonth(me, selectedMonth)));
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Could not load household information.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
+      // Om användaren inte är kopplad till något hushåll
+      // skickas den vidare till onboarding-flödet.
+      if (!user?.householdId) {
+        navigate("/onboarding");
+        return;
       }
-    };
 
+      const data = await getMyHousehold();
+      setCurrentUser(user);
+      setHousehold(data);
+
+      const me = data.members.find(
+        (member) => String(member.userId) === String(user.id)
+      );
+
+      // Förifyller användarens inkomst för vald månad när datan laddats in.
+      if (me) {
+        setMyIncome(String(getIncomeForMonth(me, selectedMonth)));
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not load household information.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadHousehold();
   }, [navigate, toast]);
 
@@ -277,8 +284,9 @@ export default function Household() {
 
               <div className="space-y-3">
                 {membersWithSelectedMonthIncome.map((member) => {
-                  const isMe =
-                    currentUser && String(member.userId) === String(currentUser.id);
+                  const isMe = Boolean(
+                    currentUser && String(member.userId) === String(currentUser.id)
+                  );
 
                   return (
                     <div
@@ -293,7 +301,9 @@ export default function Household() {
                       </div>
 
                       <div className="text-right">
-                        <p className="text-sm text-muted-foreground">Income for {selectedMonth}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Income for {selectedMonth}
+                        </p>
                         <p className="font-semibold text-foreground">
                           {member.displayedIncome} SEK
                         </p>

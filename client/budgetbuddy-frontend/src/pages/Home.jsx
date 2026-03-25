@@ -8,6 +8,13 @@ import { getBudgetHistory, getCurrentUser } from '@/services/api';
 import { getCurrentMonth, formatCurrency, formatMonth } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
 
+function getSplitModeLabel(mode) {
+  if (mode === 'income') return 'Income';
+  if (mode === 'equal') return '50/50';
+  if (mode === 'topEarnsMore') return 'Top +%';
+  return '50/50';
+}
+
 export default function Home() {
   const { toast } = useToast();
 
@@ -123,10 +130,7 @@ export default function Home() {
                   <div className="space-y-1">
                     <p className="text-xs font-medium text-muted-foreground">Default Split Mode</p>
                     <p className="text-xl font-bold tracking-tight">
-                      {currentUser?.defaultSplitMode === 'income' && 'Income'}
-                      {currentUser?.defaultSplitMode === 'equal' && '50/50'}
-                      {currentUser?.defaultSplitMode === 'topEarnsMore' && 'Top +%'}
-                      {!currentUser?.defaultSplitMode && '50/50'}
+                      {getSplitModeLabel(currentUser?.defaultSplitMode)}
                     </p>
                   </div>
                   <div className="p-2.5 rounded-xl bg-muted">
@@ -194,10 +198,7 @@ export default function Home() {
                         <div>
                           <p className="font-medium text-foreground">{formatMonth(entry.month)}</p>
                           <p className="text-sm text-muted-foreground">
-                            Split mode:{' '}
-                            {entry.splitMode === 'income' && 'Income'}
-                            {entry.splitMode === 'equal' && '50/50'}
-                            {entry.splitMode === 'topEarnsMore' && 'Top +%'}
+                            Split mode: {getSplitModeLabel(entry.splitMode)}
                           </p>
                         </div>
 

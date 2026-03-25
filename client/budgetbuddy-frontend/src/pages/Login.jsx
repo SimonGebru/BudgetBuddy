@@ -123,17 +123,11 @@ export default function Login() {
         </div>
 
         {/* Footer Links */}
-        <div className="text-center mt-6 space-y-2">
+        <div className="text-center mt-6">
           <p className="text-sm text-muted-foreground">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link to="/register" className="text-primary font-medium hover:underline">
               Create one
-            </Link>
-          </p>
-
-          <p className="text-xs text-muted-foreground">
-            <Link to="/onboarding" className="text-primary/70 hover:underline">
-              Test onboarding flow →
             </Link>
           </p>
         </div>

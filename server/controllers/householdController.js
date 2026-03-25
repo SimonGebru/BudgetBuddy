@@ -1,5 +1,11 @@
 import Household from "../models/Household.js";
 import User from "../models/User.js";
+import {
+  getCurrentMonth,
+  validateIncomeInput,
+  upsertIncomeHistoryEntry,
+  toHouseholdResponse,
+} from "../services/householdService.js";
 
 /**
  * POST /household/create
@@ -9,11 +15,21 @@ export async function createHousehold(req, res) {
   try {
     const { name, monthlyIncome } = req.body;
 
-    const incomeNumber = Number(monthlyIncome) || 0;
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonth = getCurrentMonth();
+
+    let incomeNumber = 0;
+    if (typeof monthlyIncome !== "undefined" && monthlyIncome !== "") {
+      const validatedIncome = validateIncomeInput(monthlyIncome);
+
+      if (!validatedIncome.ok) {
+        return res.status(400).json(validatedIncome.error);
+      }
+
+      incomeNumber = validatedIncome.value;
+    }
 
     const household = await Household.create({
-      name: name || "My Household",
+      name: String(name || "My Household").trim(),
       members: [
         {
           userId: req.user._id,
@@ -36,7 +52,10 @@ export async function createHousehold(req, res) {
       householdId: household._id,
     });
   } catch (err) {
-    return res.status(500).json({ error: "ServerError", message: err.message });
+    return res.status(500).json({
+      error: "ServerError",
+      message: err.message,
+    });
   }
 }
 
@@ -55,13 +74,12 @@ export async function joinHousehold(req, res) {
       });
     }
 
-    const incomeNumber = Number(monthlyIncome);
-    if (!Number.isFinite(incomeNumber) || incomeNumber < 0) {
-      return res.status(400).json({
-        error: "ValidationError",
-        message: "monthlyIncome must be a number >= 0",
-      });
+    const validatedIncome = validateIncomeInput(monthlyIncome);
+    if (!validatedIncome.ok) {
+      return res.status(400).json(validatedIncome.error);
     }
+
+    const incomeNumber = validatedIncome.value;
 
     const household = await Household.findById(householdId);
     if (!household) {
@@ -71,30 +89,19 @@ export async function joinHousehold(req, res) {
       });
     }
 
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonth = getCurrentMonth();
 
     // Om user redan är medlem → uppdatera income
     const existingMember = household.members.find(
-      (m) => String(m.userId) === String(req.user._id)
+      (member) => String(member.userId) === String(req.user._id)
     );
 
     if (existingMember) {
       existingMember.monthlyIncome = incomeNumber;
 
-      const existingIncomeEntry = existingMember.incomeHistory?.find(
-        (entry) => entry.month === currentMonth
-      );
-
       // Om det redan finns en inkomstpost för månaden uppdateras den,
       // annars läggs en ny post till i historiken.
-      if (existingIncomeEntry) {
-        existingIncomeEntry.amount = incomeNumber;
-      } else {
-        existingMember.incomeHistory.push({
-          month: currentMonth,
-          amount: incomeNumber,
-        });
-      }
+      upsertIncomeHistoryEntry(existingMember, currentMonth, incomeNumber);
 
       await household.save();
 
@@ -118,6 +125,7 @@ export async function joinHousehold(req, res) {
         },
       ],
     });
+
     await household.save();
 
     // Sätt user.householdId
@@ -128,7 +136,10 @@ export async function joinHousehold(req, res) {
       householdId: household._id,
     });
   } catch (err) {
-    return res.status(500).json({ error: "ServerError", message: err.message });
+    return res.status(500).json({
+      error: "ServerError",
+      message: err.message,
+    });
   }
 }
 
@@ -154,17 +165,7 @@ export async function getMyHousehold(req, res) {
 
     // Här formar jag om svaret lite så att frontend får en renare och mer användbar struktur.
     return res.status(200).json({
-      household: {
-        id: household._id,
-        name: household.name,
-        members: household.members.map((member) => ({
-          userId: member.userId?._id,
-          name: member.userId?.name || "Unknown",
-          email: member.userId?.email || "",
-          monthlyIncome: member.monthlyIncome,
-          incomeHistory: member.incomeHistory || [],
-        })),
-      },
+      household: toHouseholdResponse(household),
     });
   } catch (err) {
     return res.status(500).json({
@@ -189,13 +190,12 @@ export async function updateMyIncome(req, res) {
       });
     }
 
-    const incomeNumber = Number(amount);
-    if (!Number.isFinite(incomeNumber) || incomeNumber < 0) {
-      return res.status(400).json({
-        error: "ValidationError",
-        message: "amount must be a number >= 0",
-      });
+    const validatedIncome = validateIncomeInput(amount, "amount");
+    if (!validatedIncome.ok) {
+      return res.status(400).json(validatedIncome.error);
     }
+
+    const incomeNumber = validatedIncome.value;
 
     if (!req.user.householdId) {
       return res.status(400).json({
@@ -214,7 +214,7 @@ export async function updateMyIncome(req, res) {
     }
 
     const member = household.members.find(
-      (m) => String(m.userId) === String(req.user._id)
+      (memberEntry) => String(memberEntry.userId) === String(req.user._id)
     );
 
     if (!member) {
@@ -224,20 +224,8 @@ export async function updateMyIncome(req, res) {
       });
     }
 
-    const existingIncomeEntry = member.incomeHistory?.find(
-      (entry) => entry.month === month
-    );
-
-    // Samma tanke här: finns månaden redan så uppdateras posten,
-    // annars skapas en ny post i historiken.
-    if (existingIncomeEntry) {
-      existingIncomeEntry.amount = incomeNumber;
-    } else {
-      member.incomeHistory.push({
-        month,
-        amount: incomeNumber,
-      });
-    }
+    // Finns månaden redan uppdateras posten, annars skapas en ny.
+    upsertIncomeHistoryEntry(member, month, incomeNumber);
 
     // Uppdatera även monthlyIncome som "senast valda / nuvarande" fallback
     member.monthlyIncome = incomeNumber;
@@ -258,6 +246,7 @@ export async function updateMyIncome(req, res) {
     });
   }
 }
+
 /**
  * POST /household/leave
  * Låter inloggad användare lämna sitt nuvarande hushåll

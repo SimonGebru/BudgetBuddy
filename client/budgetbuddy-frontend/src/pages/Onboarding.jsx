@@ -5,7 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createHousehold, joinHousehold, getCurrentUser } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+
+function getCurrentMonth() {
+  // Används som defaultvärde när sidan öppnas första gången.
+  return new Date().toISOString().slice(0, 7);
+}
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -24,6 +28,8 @@ export default function Onboarding() {
   const [createdHouseholdId, setCreatedHouseholdId] = useState('');
   const [successType, setSuccessType] = useState('created');
 
+  const currentMonth = getCurrentMonth();
+
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -36,7 +42,8 @@ export default function Onboarding() {
           return;
         }
       } catch (error) {
-        console.error('Failed to check current user:', error);
+        // Om kontrollen misslyckas låter vi användaren stanna kvar på sidan
+        // och avslutar loading-statet så att onboarding fortfarande går att använda.
       } finally {
         setIsCheckingUser(false);
       }
@@ -179,7 +186,7 @@ export default function Onboarding() {
                 <div className="flex-1">
                   <h3 className="font-semibold text-foreground lg:text-lg">Join Household</h3>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Connect with your partner's household
+                    Connect with your partner&apos;s household
                   </p>
                 </div>
 
@@ -307,7 +314,7 @@ export default function Onboarding() {
 
             <div className="space-y-3">
               <Button asChild size="lg" className="w-full">
-                <Link to={`/budget/${new Date().toISOString().slice(0, 7)}/edit`}>
+                <Link to={`/budget/${currentMonth}/edit`}>
                   <LayoutDashboard className="h-4 w-4 mr-2" />
                   Create Your First Budget
                 </Link>

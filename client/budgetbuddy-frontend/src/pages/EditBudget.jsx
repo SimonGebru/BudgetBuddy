@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -12,18 +12,14 @@ export default function EditBudget() {
   const { month } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+
   const [budget, setBudget] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    // Laddar budgeten för månaden som finns i URL:en.
-    if (month) {
-      loadBudget();
-    }
-  }, [month]);
+  const loadBudget = useCallback(async () => {
+    if (!month) return;
 
-  const loadBudget = async () => {
     setIsLoading(true);
 
     try {
@@ -38,7 +34,12 @@ export default function EditBudget() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [month, toast]);
+
+  useEffect(() => {
+    // Laddar budgeten för månaden som finns i URL:en.
+    loadBudget();
+  }, [loadBudget]);
 
   const handleSave = async (categories) => {
     setIsSaving(true);
@@ -67,6 +68,7 @@ export default function EditBudget() {
   return (
     <AppLayout showNav={false}>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -85,6 +87,7 @@ export default function EditBudget() {
           </div>
         </div>
 
+        {/* Loading */}
         {isLoading && (
           <div className="space-y-3">
             {[...Array(4)].map((_, i) => (
@@ -101,6 +104,7 @@ export default function EditBudget() {
           </div>
         )}
 
+        {/* Editor */}
         {!isLoading && budget && (
           <BudgetEditor
             categories={budget.categories}
