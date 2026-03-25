@@ -154,3 +154,18 @@ Eftersom projektet genomfördes individuellt användes ett förenklat branch-upp
 Under utvecklingen gjordes löpande commits i `dev` när nya funktioner eller förbättringar implementerades. När funktionalitet ansågs stabil kunde den föras vidare till `main`.
 
 Detta arbetssätt valdes eftersom projektet utvecklades av en ensam utvecklare. I ett större teamprojekt hade en mer formell strategi kunnat användas, exempelvis Git Flow med separata feature-branches och pull requests.
+
+
+## Kom igång
+
+git clone ...
+cd project
+npm install
+
+# starta backend
+cd server
+npm run dev
+
+# starta frontend
+cd client
+npm run dev
