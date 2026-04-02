@@ -6,6 +6,7 @@ import devRoutes from "./routes/devRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
 import budgetRoutes from "./routes/budgetRoutes.js";
 import householdRoutes from "./routes/householdRoutes.js";
+import personalBudgetRoutes from "./routes/personalBudgetRoutes.js";
 
 const app = express();
 
@@ -18,16 +19,17 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-// Routes 
+// Routes
 app.use("/auth", authRoutes);
 app.use("/dev", devRoutes);
 
-// Transactions 
+// Feature routes
 app.use("/transactions", transactionRoutes);
 app.use("/budget", budgetRoutes);
 app.use("/household", householdRoutes);
+app.use("/personal-budget", personalBudgetRoutes);
 
-// 404 fallback 
+// 404 fallback
 app.use((req, res) => {
   res.status(404).json({
     error: "NotFound",

@@ -1,22 +1,13 @@
 import { useLocation, Link } from 'react-router-dom';
-import { LayoutDashboard, Settings, Wallet, Home, Users } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-// Lista över alla navigationselement som ska visas i sidomenyn.
-// Genom att definiera dem här kan vi enkelt rendera menyn dynamiskt.
-const navItems = [
-  { path: '/home', label: 'Home', icon: Home },
-  { path: '/household', label: 'Household', icon: Users },
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/settings', label: 'Settings', icon: Settings },
-];
+import { navItems } from '@/components/layout/navItems';
 
 export function DesktopSidebar() {
   const location = useLocation();
 
   return (
     <aside className="w-64 min-h-screen border-r border-border bg-card flex flex-col">
-      {/* Logo / App branding */}
       <div className="p-6 border-b border-border">
         <Link to="/home" className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
@@ -26,12 +17,9 @@ export function DesktopSidebar() {
         </Link>
       </div>
 
-      {/* Main navigation */}
       <nav className="flex-1 p-4">
         <ul className="space-y-1">
           {navItems.map(({ path, label, icon: Icon }) => {
-            // Kontrollerar om den aktuella sidan matchar länken
-            // för att kunna markera den som aktiv i UI:t.
             const isActive = location.pathname.startsWith(path);
 
             return (
@@ -54,7 +42,6 @@ export function DesktopSidebar() {
         </ul>
       </nav>
 
-      {/* Footer text */}
       <div className="p-4 border-t border-border">
         <p className="text-xs text-muted-foreground text-center">
           Budget together, grow together

@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Copy } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { BudgetEditor } from '@/components/budget/BudgetEditor';
 import { Button } from '@/components/ui/button';
-import { getBudgetSummary, saveBudgetPlan } from '@/services/api';
+import {
+  getBudgetSummary,
+  saveBudgetPlan,
+  duplicateBudget,
+} from '@/services/api';
 import { formatMonth } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,6 +20,7 @@ export default function EditBudget() {
   const [budget, setBudget] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
   const loadBudget = useCallback(async () => {
     if (!month) return;
@@ -65,26 +70,63 @@ export default function EditBudget() {
     }
   };
 
+  const handleDuplicate = async () => {
+    if (!month) return;
+
+    setIsDuplicating(true);
+
+    try {
+      await duplicateBudget(month);
+
+      toast({
+        title: 'Budget copied!',
+        description: 'Previous month has been copied.',
+      });
+
+      await loadBudget();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Could not duplicate budget.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
   return (
     <AppLayout showNav={false}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="flex-shrink-0"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="flex-shrink-0"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
 
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Edit Budget</h1>
-            <p className="text-sm text-muted-foreground">
-              {month && formatMonth(month)}
-            </p>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Edit Budget</h1>
+              <p className="text-sm text-muted-foreground">
+                {month && formatMonth(month)}
+              </p>
+            </div>
           </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleDuplicate}
+            disabled={isDuplicating}
+          >
+            <Copy className="h-4 w-4 mr-2" />
+            {isDuplicating ? 'Copying...' : 'Copy previous'}
+          </Button>
         </div>
 
         {/* Loading */}

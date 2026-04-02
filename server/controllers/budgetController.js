@@ -10,6 +10,25 @@ import {
   getDefaultSplit,
 } from "../services/budgetService.js";
 
+function getPreviousMonth(month) {
+  const [year, monthNumber] = month.split("-").map(Number);
+
+  const date = new Date(year, monthNumber - 1, 1);
+  date.setMonth(date.getMonth() - 1);
+
+  const previousYear = date.getFullYear();
+  const previousMonth = String(date.getMonth() + 1).padStart(2, "0");
+
+  return `${previousYear}-${previousMonth}`;
+}
+
+function cloneBudgetCategories(categories = []) {
+  return categories.map((category) => ({
+    name: category.name,
+    amount: Number(category.amount) || 0,
+  }));
+}
+
 async function getValidatedHousehold(householdId) {
   const household = await Household.findById(householdId)
     .populate("members.userId", "name")
@@ -77,6 +96,29 @@ export async function upsertBudgetPlan(req, res) {
     const validatedSplit = validateSplit(split);
     if (!validatedSplit.ok) {
       return res.status(400).json(validatedSplit.error);
+    }
+
+    // Om användaren sparar ett tomt formulär ska ingen tom budget sparas i databasen.
+    // Finns redan en budget för månaden tas den bort, annars görs ingenting.
+    if (cleanedCategories.length === 0) {
+      const existingPlan = await BudgetPlan.findOne({
+        householdId: req.user.householdId,
+        month,
+      }).exec();
+
+      if (existingPlan) {
+        await BudgetPlan.findByIdAndDelete(existingPlan._id);
+
+        return res.status(200).json({
+          message: "Budget cleared",
+          plan: null,
+        });
+      }
+
+      return res.status(200).json({
+        message: "No budget data to save",
+        plan: null,
+      });
     }
 
     // findOneAndUpdate + upsert gör att samma endpoint kan användas både för att skapa
@@ -259,6 +301,63 @@ export async function getBudgetHistory(req, res) {
 
     return res.status(200).json({
       history,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: "ServerError",
+      message: err.message,
+    });
+  }
+}
+
+export async function duplicateBudgetPlan(req, res) {
+  try {
+    const { month } = req.params;
+
+    if (!month || typeof month !== "string" || !/^\d{4}-\d{2}$/.test(month)) {
+      return res.status(400).json({
+        error: "ValidationError",
+        message: "month is required in YYYY-MM format",
+      });
+    }
+
+    const previousMonth = getPreviousMonth(month);
+
+    const existingPlan = await BudgetPlan.findOne({
+      householdId: req.user.householdId,
+      month,
+    }).exec();
+
+    if (existingPlan) {
+      return res.status(409).json({
+        error: "Conflict",
+        message: "A household budget already exists for this month",
+      });
+    }
+
+    const previousPlan = await BudgetPlan.findOne({
+      householdId: req.user.householdId,
+      month: previousMonth,
+    }).exec();
+
+    if (!previousPlan) {
+      return res.status(404).json({
+        error: "NotFound",
+        message: "No household budget found for previous month",
+      });
+    }
+
+    const duplicatedPlan = await BudgetPlan.create({
+      householdId: req.user.householdId,
+      month,
+      createdBy: req.user._id,
+      categories: cloneBudgetCategories(previousPlan.categories),
+      split: previousPlan.split || getDefaultSplit(),
+    });
+
+    return res.status(201).json({
+      message: "Household budget duplicated from previous month",
+      plan: duplicatedPlan,
     });
   } catch (err) {
     return res.status(500).json({

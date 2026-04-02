@@ -15,7 +15,9 @@ import Register from "./pages/Register";
 import Onboarding from "./pages/Onboarding";
 import Household from "@/pages/Household";
 import Dashboard from "./pages/Dashboard";
+import MyBudget from "./pages/MyBudget";
 import EditBudget from "./pages/EditBudget";
+import EditMyBudget from "./pages/EditMyBudget";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
@@ -93,6 +95,24 @@ const App = () => (
             />
 
             <Route
+              path="/my-budget"
+              element={
+                <ProtectedRoute>
+                  <MyBudget />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/my-budget/:month/edit"
+              element={
+                <ProtectedRoute>
+                  <EditMyBudget />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/budget/:month/edit"
               element={
                 <ProtectedRoute>
@@ -120,5 +140,3 @@ const App = () => (
 );
 
 export default App;
-
-

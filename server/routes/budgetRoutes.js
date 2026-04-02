@@ -5,6 +5,7 @@ import {
   getBudgetSummary,
   updateBudgetSplit,
   getBudgetHistory,
+  duplicateBudgetPlan,
 } from "../controllers/budgetController.js";
 
 const router = Router();
@@ -23,5 +24,7 @@ router.get("/plans/:month/summary", getBudgetSummary);
 
 // Byt split-läge för en månad
 router.patch("/plans/:month/split", updateBudgetSplit);
+// Duplicera en budgetplan från en månad till en annan
+router.post("/plans/:month/duplicate", duplicateBudgetPlan);
 
 export default router;

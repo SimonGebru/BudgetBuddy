@@ -252,7 +252,11 @@ export async function saveBudgetPlan(
     body: JSON.stringify({ month, categories, split }),
   });
 }
-
+export async function duplicateBudget(month) {
+  return request(`/budget/plans/${month}/duplicate`, {
+    method: "POST",
+  });
+}
 export async function updateSplitMode(month, splitMode) {
   const split =
     typeof splitMode === "string"
@@ -262,6 +266,32 @@ export async function updateSplitMode(month, splitMode) {
   return request(`/budget/plans/${month}/split`, {
     method: "PATCH",
     body: JSON.stringify({ split }),
+  });
+}
+
+export async function getPersonalBudget(month) {
+  return request(`/personal-budget/plans/${month}`, {
+    method: "GET",
+  });
+}
+
+export async function savePersonalBudget(month, incomes, expenses) {
+  return request("/personal-budget/plans", {
+    method: "POST",
+    body: JSON.stringify({ month, incomes, expenses }),
+  });
+}
+
+export async function getPersonalBudgetHistory() {
+  const data = await request("/personal-budget/history", {
+    method: "GET",
+  });
+
+  return data.history;
+}
+export async function duplicatePersonalBudget(month) {
+  return request(`/personal-budget/plans/${month}/duplicate`, {
+    method: "POST",
   });
 }
 
