@@ -7,8 +7,8 @@ import { defineConfig } from "eslint/config";
 
 export default defineConfig([
   {
-    ignores: ["dist", "coverage"],
-  },
+  ignores: ["dist/**", "dev-dist/**", "coverage/**"],
+},
   {
     files: ["**/*.{js,jsx}"],
     ignores: ["tailwind.config.js", "tailwind.config.cjs", "vite.config.js"],
