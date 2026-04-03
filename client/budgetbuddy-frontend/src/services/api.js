@@ -295,6 +295,25 @@ export async function duplicatePersonalBudget(month) {
   });
 }
 
+export async function getTransactions(month) {
+  return request(`/transactions?month=${month}`, {
+    method: "GET",
+  });
+}
+
+export async function createTransaction(data) {
+  return request("/transactions", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteTransaction(id) {
+  return request(`/transactions/${id}`, {
+    method: "DELETE",
+  });
+}
+
 /**
  * USER STATE HELPERS
  */

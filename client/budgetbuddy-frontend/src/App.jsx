@@ -18,6 +18,7 @@ import Dashboard from "./pages/Dashboard";
 import MyBudget from "./pages/MyBudget";
 import EditBudget from "./pages/EditBudget";
 import EditMyBudget from "./pages/EditMyBudget";
+import Transactions from "./pages/Transactions";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
@@ -117,6 +118,15 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <EditBudget />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/transactions"
+              element={
+                <ProtectedRoute>
+                  <Transactions />
                 </ProtectedRoute>
               }
             />

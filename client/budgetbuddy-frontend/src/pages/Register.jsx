@@ -52,7 +52,7 @@ export default function Register() {
 
       toast({
         title: 'Account created!',
-        description: 'Welcome to BudgetBuddy.',
+        description: 'Welcome to Budgify.',
       });
 
       // Efter registrering skickas användaren vidare till onboarding

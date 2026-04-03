@@ -69,7 +69,7 @@ export default function Login() {
             <span className="text-2xl lg:text-3xl font-bold text-primary-foreground">B</span>
           </div>
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Welcome back</h1>
-          <p className="text-muted-foreground mt-1 lg:text-lg">Sign in to BudgetBuddy</p>
+          <p className="text-muted-foreground mt-1 lg:text-lg">Sign in to Budgify</p>
         </div>
 
         {/* Form Card */}
