@@ -1,5 +1,3 @@
-// Denna fil definierar alla routes för transaktioner. Just nu är det bara en skiss på hur det kan se ut när jag implementerar transaktionshantering. (Nice to have)
-
 import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth.js";
 import {
@@ -11,7 +9,6 @@ import {
 
 const router = Router();
 
-// Skydda ALLT
 router.use(requireAuth);
 
 router.post("/", createTransaction);

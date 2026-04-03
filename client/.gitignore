@@ -1,2 +1,4 @@
 DS_Store
-**/.vite/switch de
+.vite 
+client/budgetbuddy-frontend/dev-dist
+client/budgetbuddy-frontend/dist
