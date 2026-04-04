@@ -55,9 +55,12 @@ export default function Register() {
         description: 'Welcome to Budgify.',
       });
 
-      // Efter registrering skickas användaren vidare till onboarding
-      // för att skapa eller gå med i ett hushåll.
-      navigate('/onboarding');
+      // Nya användare utan household ska kunna börja direkt i sin privata budget.
+      if (user.householdId) {
+        navigate('/dashboard');
+      } else {
+        navigate('/my-budget');
+      }
     } catch (error) {
       toast({
         title: 'Registration failed',
@@ -72,16 +75,14 @@ export default function Register() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 gradient-warm">
       <div className="w-full max-w-sm lg:max-w-md animate-scale-in">
-        {/* Logo/Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
             <span className="text-2xl lg:text-3xl font-bold text-primary-foreground">B</span>
           </div>
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Create account</h1>
-          <p className="text-muted-foreground mt-1 lg:text-lg">Start budgeting together</p>
+          <p className="text-muted-foreground mt-1 lg:text-lg">Start budgeting with Budgify</p>
         </div>
 
-        {/* Form Card */}
         <div className="card-elevated p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -118,7 +119,6 @@ export default function Register() {
                   className="pr-10"
                 />
 
-                {/* Låter användaren visa eller dölja lösenordet i inputfältet */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -142,7 +142,6 @@ export default function Register() {
           </form>
         </div>
 
-        {/* Footer Link */}
         <p className="text-center text-sm text-muted-foreground mt-6">
           Already have an account?{' '}
           <Link to="/login" className="text-primary font-medium hover:underline">

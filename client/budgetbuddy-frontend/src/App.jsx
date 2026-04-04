@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import PublicOnlyRoute from "@/components/auth/PublicOnlyRoute";
+import HouseholdRoute from "@/components/auth/HouseholdRoute";
 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -89,9 +90,9 @@ const App = () => (
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <HouseholdRoute>
                   <Dashboard />
-                </ProtectedRoute>
+                </HouseholdRoute>
               }
             />
 

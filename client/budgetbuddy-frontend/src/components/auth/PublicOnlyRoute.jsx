@@ -16,11 +16,10 @@ export default function PublicOnlyRoute({ children }) {
   }
 
   // Om användaren redan är inloggad ska den inte kunna gå tillbaka till t.ex. login eller signup.
-  // Här skickas användaren vidare beroende på om hushållet redan finns eller om onboarding först behövs.
+  // Har användaren household skickas den till dashboarden, annars till sin privata budget.
   if (isAuthenticated) {
-    return <Navigate to={user?.householdId ? "/dashboard" : "/onboarding"} replace />;
+    return <Navigate to={user?.householdId ? "/dashboard" : "/my-budget"} replace />;
   }
 
-  // Om användaren inte är inloggad får den se sidan som routen innehåller.
   return children;
 }

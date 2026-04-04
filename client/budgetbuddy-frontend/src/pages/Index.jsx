@@ -10,9 +10,24 @@ import InstallPromptModal from '@/components/pwa/InstallPromptModal';
 export default function Index() {
   const { canInstall, install, isIos, isInStandaloneMode } = usePWAInstall();
   const [showInstallModal, setShowInstallModal] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobileView(window.innerWidth < 768);
+    };
+
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
 
   useEffect(() => {
     const dismissed = localStorage.getItem('Budgify-install-dismissed');
+
+    // Popupen ska bara kunna visas i mobilvy
+    if (!isMobileView) return;
 
     // Visa inte popupen om appen redan är installerad
     if (isInStandaloneMode) return;
@@ -28,7 +43,7 @@ export default function Index() {
 
       return () => clearTimeout(timer);
     }
-  }, [canInstall, isIos, isInStandaloneMode]);
+  }, [canInstall, isIos, isInStandaloneMode, isMobileView]);
 
   const handleCloseInstallModal = () => {
     localStorage.setItem('Budgify-install-dismissed', 'true');
@@ -45,7 +60,6 @@ export default function Index() {
     <>
       <div className="min-h-screen flex items-center justify-center px-4 gradient-warm">
         <div className="w-full max-w-sm lg:max-w-lg animate-scale-in">
-          {/* App branding och kort introduktion */}
           <div className="text-center mb-8 lg:mb-10">
             <div className="w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
               <Wallet className="h-8 w-8 lg:h-10 lg:w-10 text-primary-foreground" />
@@ -61,7 +75,6 @@ export default function Index() {
             </p>
           </div>
 
-          {/* Auth actions */}
           <div className="card-elevated p-6 lg:p-8 space-y-4">
             <Button asChild size="lg" className="w-full">
               <Link to="/login">
@@ -78,7 +91,6 @@ export default function Index() {
             </Button>
           </div>
 
-          {/* Kort beskrivning av appens syfte */}
           <p className="text-center text-xs lg:text-sm text-muted-foreground mt-6">
             A simple way to manage shared budgets and household planning.
           </p>
@@ -86,7 +98,7 @@ export default function Index() {
       </div>
 
       <InstallPromptModal
-        open={showInstallModal}
+        open={isMobileView && showInstallModal}
         onClose={handleCloseInstallModal}
         onInstall={handleInstall}
         canInstall={canInstall}

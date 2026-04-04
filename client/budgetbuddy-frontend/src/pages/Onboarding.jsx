@@ -1,13 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Home, Users, ArrowRight, CheckCircle, Copy, LayoutDashboard } from 'lucide-react';
+import {
+  Home,
+  Users,
+  ArrowRight,
+  CheckCircle,
+  Copy,
+  LayoutDashboard,
+  WalletCards,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createHousehold, joinHousehold, getCurrentUser } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 
 function getCurrentMonth() {
-  // Används som defaultvärde när sidan öppnas första gången.
   return new Date().toISOString().slice(0, 7);
 }
 
@@ -18,6 +25,7 @@ export default function Onboarding() {
   const [step, setStep] = useState('choice');
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingUser, setIsCheckingUser] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const [householdName, setHouseholdName] = useState('');
   const [monthlyIncome, setMonthlyIncome] = useState('');
@@ -34,16 +42,15 @@ export default function Onboarding() {
     const checkUser = async () => {
       try {
         const user = await getCurrentUser();
+        setCurrentUser(user);
 
-        // Om användaren redan är kopplad till ett hushåll
-        // ska onboarding hoppas över och användaren skickas till dashboarden.
+        // Om användaren redan har household ska onboarding hoppas över.
         if (user?.householdId) {
           navigate('/dashboard');
           return;
         }
       } catch (error) {
-        // Om kontrollen misslyckas låter vi användaren stanna kvar på sidan
-        // och avslutar loading-statet så att onboarding fortfarande går att använda.
+        // Låt användaren stanna kvar på sidan om kontrollen misslyckas.
       } finally {
         setIsCheckingUser(false);
       }
@@ -69,7 +76,6 @@ export default function Onboarding() {
     try {
       const result = await createHousehold(householdName, Number(monthlyIncome));
 
-      // Sparar household-id så att det kan visas i success-steget efter skapandet.
       setCreatedHouseholdId(result.id);
       setSuccessType('created');
       setStep('success');
@@ -122,7 +128,6 @@ export default function Onboarding() {
     });
   };
 
-  // Visas medan vi först kontrollerar om användaren redan tillhör ett hushåll.
   if (isCheckingUser) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 gradient-warm">
@@ -153,46 +158,64 @@ export default function Onboarding() {
         )}
 
         {step === 'choice' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <button
-              onClick={() => setStep('create')}
-              className="card-interactive w-full p-6 text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Home className="h-6 w-6 lg:h-7 lg:w-7 text-primary" />
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <button
+                onClick={() => setStep('create')}
+                className="card-interactive w-full p-6 text-left"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Home className="h-6 w-6 lg:h-7 lg:w-7 text-primary" />
+                  </div>
+
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground lg:text-lg">Create Household</h3>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      Start fresh and invite your partner
+                    </p>
+                  </div>
+
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
                 </div>
+              </button>
 
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground lg:text-lg">Create Household</h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    Start fresh and invite your partner
-                  </p>
+              <button
+                onClick={() => setStep('join')}
+                className="card-interactive w-full p-6 text-left"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+                    <Users className="h-6 w-6 lg:h-7 lg:w-7 text-accent" />
+                  </div>
+
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground lg:text-lg">Join Household</h3>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      Connect with your partner&apos;s household
+                    </p>
+                  </div>
+
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
                 </div>
+              </button>
+            </div>
 
-                <ArrowRight className="h-5 w-5 text-muted-foreground" />
-              </div>
-            </button>
+            <div className="card-elevated p-4">
+              <p className="text-sm text-muted-foreground text-center mb-3">
+                You can also keep using Budgify without a household for now.
+              </p>
 
-            <button
-              onClick={() => setStep('join')}
-              className="card-interactive w-full p-6 text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-                  <Users className="h-6 w-6 lg:h-7 lg:w-7 text-accent" />
-                </div>
-
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground lg:text-lg">Join Household</h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    Connect with your partner&apos;s household
-                  </p>
-                </div>
-
-                <ArrowRight className="h-5 w-5 text-muted-foreground" />
-              </div>
-            </button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate('/my-budget')}
+              >
+                <WalletCards className="h-4 w-4 mr-2" />
+                Continue with personal budget
+              </Button>
+            </div>
           </div>
         )}
 
@@ -296,7 +319,6 @@ export default function Onboarding() {
                 : "You've successfully joined the household. You can now budget together!"}
             </p>
 
-            {/* Om hushållet skapades visas id:t så att det enkelt kan delas med partnern */}
             {successType === 'created' && (
               <div className="card-elevated p-4 mb-6">
                 <p className="text-xs font-medium text-muted-foreground mb-2">Your Household ID</p>

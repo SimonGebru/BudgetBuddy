@@ -1,10 +1,14 @@
-import { useLocation, Link } from 'react-router-dom';
-import { Wallet } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { navItems } from '@/components/layout/navItems';
+import { useLocation, Link } from "react-router-dom";
+import { Wallet } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { getNavItems } from "@/components/layout/navItems";
+import { useAuth } from "@/context/AuthContext";
 
 export function DesktopSidebar() {
   const location = useLocation();
+  const { user } = useAuth();
+
+  const navItems = getNavItems(!!user?.householdId);
 
   return (
     <aside className="w-64 min-h-screen border-r border-border bg-card flex flex-col">
@@ -27,10 +31,10 @@ export function DesktopSidebar() {
                 <Link
                   to={path}
                   className={cn(
-                    'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium',
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium",
                     isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   <Icon className="h-5 w-5" />

@@ -9,6 +9,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 import {
   Sheet,
   SheetContent,
@@ -17,20 +18,34 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-const primaryNavItems = [
-  { path: "/home", label: "Home", icon: Home },
-  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/my-budget", label: "My Budget", icon: WalletCards },
-];
-
-const secondaryNavItems = [
-  { path: "/household", label: "Household", icon: Users },
-  { path: "/transactions", label: "Transactions", icon: Receipt },
-  { path: "/settings", label: "Settings", icon: Settings },
-];
-
 export function Navbar() {
   const location = useLocation();
+  const { user } = useAuth();
+
+  const hasHousehold = !!user?.householdId;
+
+  const primaryNavItems = hasHousehold
+    ? [
+        { path: "/home", label: "Home", icon: Home },
+        { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { path: "/my-budget", label: "My Budget", icon: WalletCards },
+      ]
+    : [
+        { path: "/home", label: "Home", icon: Home },
+        { path: "/my-budget", label: "My Budget", icon: WalletCards },
+        { path: "/transactions", label: "Transactions", icon: Receipt },
+      ];
+
+  const secondaryNavItems = hasHousehold
+    ? [
+        { path: "/household", label: "Household", icon: Users },
+        { path: "/transactions", label: "Transactions", icon: Receipt },
+        { path: "/settings", label: "Settings", icon: Settings },
+      ]
+    : [
+        { path: "/household", label: "Household", icon: Users },
+        { path: "/settings", label: "Settings", icon: Settings },
+      ];
 
   const isMoreActive = secondaryNavItems.some(({ path }) =>
     location.pathname.startsWith(path)
@@ -53,12 +68,7 @@ export function Navbar() {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Icon
-                className={cn(
-                  "h-5 w-5",
-                  isActive && "stroke-[2.5]"
-                )}
-              />
+              <Icon className={cn("h-5 w-5", isActive && "stroke-[2.5]")} />
               <span className="text-[11px] font-medium text-center leading-tight">
                 {label}
               </span>
@@ -78,10 +88,7 @@ export function Navbar() {
               )}
             >
               <MoreHorizontal
-                className={cn(
-                  "h-5 w-5",
-                  isMoreActive && "stroke-[2.5]"
-                )}
+                className={cn("h-5 w-5", isMoreActive && "stroke-[2.5]")}
               />
               <span className="text-[11px] font-medium text-center leading-tight">
                 More
@@ -103,7 +110,7 @@ export function Navbar() {
                     key={path}
                     to={path}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-4 py-3 transition-colors",
+                      "flex items-center gap-3 rounded-2xl px-4 py-4 transition-colors",
                       isActive
                         ? "bg-primary text-primary-foreground"
                         : "text-foreground hover:bg-muted"

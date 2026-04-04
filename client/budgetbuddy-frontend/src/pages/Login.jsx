@@ -43,11 +43,12 @@ export default function Login() {
         description: `Logged in as ${user.name}`,
       });
 
-      // Skickar användaren vidare beroende på om hushållet redan finns eller om onboarding först behövs.
+      // Har användaren ett household skickas den till dashboarden.
+      // Annars skickas den till sin privata budgetvy.
       if (user.householdId) {
         navigate('/dashboard');
       } else {
-        navigate('/onboarding');
+        navigate('/my-budget');
       }
     } catch (error) {
       toast({
@@ -63,7 +64,6 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 gradient-warm">
       <div className="w-full max-w-sm lg:max-w-md animate-scale-in">
-        {/* Logo/Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
             <span className="text-2xl lg:text-3xl font-bold text-primary-foreground">B</span>
@@ -72,7 +72,6 @@ export default function Login() {
           <p className="text-muted-foreground mt-1 lg:text-lg">Sign in to Budgify</p>
         </div>
 
-        {/* Form Card */}
         <div className="card-elevated p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -98,7 +97,6 @@ export default function Login() {
                   className="pr-10"
                 />
 
-                {/* Låter användaren visa eller dölja lösenordet i inputfältet */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -122,7 +120,6 @@ export default function Login() {
           </form>
         </div>
 
-        {/* Footer Links */}
         <div className="text-center mt-6">
           <p className="text-sm text-muted-foreground">
             Don&apos;t have an account?{' '}
