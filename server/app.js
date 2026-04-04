@@ -14,6 +14,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "https://budget-buddy-five-plum.vercel.app",
+  "https://budgify.se",
 ];
 
 app.use(
