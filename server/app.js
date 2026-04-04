@@ -10,27 +10,28 @@ import personalBudgetRoutes from "./routes/personalBudgetRoutes.js";
 
 const app = express();
 
-
 const allowedOrigins = [
   "http://localhost:5173",
   "https://budget-buddy-five-plum.vercel.app",
   "https://budgify.se",
+  "https://www.budgify.se",
 ];
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin) return callback(null, true);
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-  })
-);
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 // Middleware
 app.use(express.json());
