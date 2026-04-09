@@ -59,35 +59,42 @@ export function validateSplit(split) {
 }
 
 export function calcWeights({ mode, percentMore }, members, month) {
-  if (!Array.isArray(members) || members.length < 2) {
+  if (!Array.isArray(members) || members.length === 0) {
     return [];
   }
 
-  // Här plockar jag ut den data som faktiskt behövs för själva fördelningen.
+  // ✅ SOLO MODE
+  if (members.length === 1) {
+    const member = members[0];
+
+    return [
+      {
+        userId: member.userId._id?.toString?.() || member.userId.toString(),
+        name: member.userId.name,
+        monthlyIncome: getIncomeForMonth(member, month),
+        weight: 1,
+      },
+    ];
+  }
+
   const incomes = members.map((member) => ({
     userId: member.userId._id?.toString?.() || member.userId.toString(),
     name: member.userId.name,
     monthlyIncome: getIncomeForMonth(member, month),
   }));
 
-  // Equal betyder att alla delar lika mycket oavsett inkomst.
   if (mode === "equal") {
     const weight = 1 / incomes.length;
     return incomes.map((person) => ({ ...person, weight }));
   }
 
   if (mode === "topEarnsMore") {
-    // Det här läget betyder att den som tjänar mest betalar en viss procent mer än den andra.
-    // Exempel: 20% mer blir ett förhållande på 1.2 mot 1.
     const ratio = 1 + (Number(percentMore) || 0) / 100;
 
-    // Sorterar fram vem som tjänar mest just den här månaden.
     const sorted = [...incomes].sort((a, b) => b.monthlyIncome - a.monthlyIncome);
     const top = sorted[0];
     const other = sorted[1];
 
-    // Om båda tjänar lika mycket finns det ingen tydlig "top earner",
-    // så då blir det mer rimligt att falla tillbaka till equal.
     if (top.monthlyIncome === other.monthlyIncome) {
       const weight = 1 / incomes.length;
       return incomes.map((person) => ({ ...person, weight }));
@@ -96,7 +103,6 @@ export function calcWeights({ mode, percentMore }, members, month) {
     const topWeight = ratio / (ratio + 1);
     const otherWeight = 1 / (ratio + 1);
 
-    // Returnerar vikterna i samma ordning som members hade från början.
     return incomes.map((person) => {
       if (person.userId === top.userId) return { ...person, weight: topWeight };
       if (person.userId === other.userId) return { ...person, weight: otherWeight };
@@ -104,11 +110,8 @@ export function calcWeights({ mode, percentMore }, members, month) {
     });
   }
 
-  // Standardläget är att budgeten delas proportionellt efter inkomst.
   const totalIncome = incomes.reduce((sum, person) => sum + person.monthlyIncome, 0);
 
-  // Om båda inkomsterna saknas eller blir 0 går det inte att räkna proportioner,
-  // så då kör vi equal istället.
   if (totalIncome <= 0) {
     const weight = 1 / incomes.length;
     return incomes.map((person) => ({ ...person, weight }));

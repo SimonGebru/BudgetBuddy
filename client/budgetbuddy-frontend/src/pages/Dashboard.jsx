@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Pencil, AlertTriangle } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -31,25 +31,38 @@ export default function Dashboard() {
 
   const [budget, setBudget] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Bara för första laddningen
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  // För tysta bakgrundsuppdateringar
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // För att undvika dubblad första load i dev-läge
+  const hasLoadedInitially = useRef(false);
 
   useEffect(() => {
-    // Sparar den valda månaden så att användaren stannar kvar på samma månad
-    // även efter refresh eller om sidan öppnas igen.
     localStorage.setItem(DASHBOARD_MONTH_STORAGE_KEY, month);
   }, [month]);
 
   useEffect(() => {
-    // Laddar om dashboard-datan när användaren byter månad.
-    loadBudget();
+    if (!hasLoadedInitially.current) {
+      hasLoadedInitially.current = true;
+      loadBudget({ showInitialLoader: true });
+      return;
+    }
+
+    loadBudget({ showInitialLoader: false, showRefreshState: true });
   }, [month]);
 
-  const loadBudget = async () => {
-    setIsLoading(true);
+  const loadBudget = async ({
+    showInitialLoader = false,
+    showRefreshState = false,
+  } = {}) => {
+    if (showInitialLoader) setIsInitialLoading(true);
+    if (showRefreshState) setIsRefreshing(true);
 
     try {
-      // Hämtar både budgeten och aktuell användare parallellt
-      // för att slippa vänta på två separata requests efter varandra.
       const [budgetData, userData] = await Promise.all([
         getBudgetSummary(month),
         getCurrentUser(),
@@ -64,7 +77,8 @@ export default function Dashboard() {
         variant: 'destructive',
       });
     } finally {
-      setIsLoading(false);
+      if (showInitialLoader) setIsInitialLoading(false);
+      if (showRefreshState) setIsRefreshing(false);
     }
   };
 
@@ -73,10 +87,7 @@ export default function Dashboard() {
 
     try {
       await updateSplitMode(month, newSplit);
-
-      // Efter uppdatering hämtas budgeten igen så att UI:t alltid visar backendens senaste uträkning.
-      const refreshedBudget = await getBudgetSummary(month);
-      setBudget(refreshedBudget);
+      await loadBudget({ showInitialLoader: false, showRefreshState: false });
     } catch (error) {
       toast({
         title: 'Error',
@@ -87,8 +98,8 @@ export default function Dashboard() {
   };
 
   const hasBudget = budget && budget.categories.length > 0;
-
-  // Konverterar till Number för att vara säker på att jämförelsen blir numerisk och inte sker som text.
+  const isSolo = budget?.isSolo;
+console.log("isSolo:", isSolo);
   const totalBudgetNumber = Number(budget?.totalBudget || 0);
   const totalIncomeNumber = Number(budget?.totalIncome || 0);
 
@@ -96,8 +107,6 @@ export default function Dashboard() {
   const overBudgetAmount = isOverBudget ? totalBudgetNumber - totalIncomeNumber : 0;
   const remainingAmount = !isOverBudget ? totalIncomeNumber - totalBudgetNumber : 0;
 
-  // Räknar hur stor del av inkomsten som budgeten använder.
-  // Max 100 i UI så att progressbaren inte flyter ut visuellt om budgeten är högre än inkomsten.
   const budgetUsagePercent =
     totalIncomeNumber > 0
       ? Math.min((totalBudgetNumber / totalIncomeNumber) * 100, 100)
@@ -106,35 +115,78 @@ export default function Dashboard() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Dashboard</h1>
         </div>
 
-        {/* Month Picker */}
         <MonthPicker month={month} onChange={setMonth} />
 
-        {/* Loading State */}
-        {isLoading && (
-          <>
-            <SummaryCardsSkeleton />
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <CategoryCardSkeleton key={i} />
-              ))}
-            </div>
-          </>
-        )}
+        {!budget && (
+  <>
+    <SummaryCardsSkeleton />
+    <div className="space-y-3">
+      {[...Array(3)].map((_, i) => (
+        <CategoryCardSkeleton key={i} />
+      ))}
+    </div>
+  </>
+)}
 
-        {/* Content */}
-        {!isLoading && budget && currentUser && (
+        {!isInitialLoading && budget && currentUser && (
           <>
+            {isRefreshing && (
+              <div className="text-sm text-muted-foreground">
+                Updating...
+              </div>
+            )}
+
+            {isSolo && (
+              <div className="card-elevated p-5 lg:p-6 border border-border space-y-4">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg lg:text-xl font-semibold text-foreground">
+                      Du är ensam i hushållet just nu
+                    </h2>
+                    <p className="text-sm lg:text-base text-muted-foreground mt-1">
+                      Du kan fortfarande använda appen och planera din budget. När någon ansluter aktiveras delning automatiskt.
+                    </p>
+                  </div>
+
+                  <Button asChild variant="outline" className="w-full lg:w-auto">
+                    <Link to="/onboarding">
+                      Hantera hushåll
+                    </Link>
+                  </Button>
+                </div>
+
+                {currentUser?.householdId && (
+                  <div className="bg-muted rounded-lg p-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Invite code</p>
+                      <p className="font-mono text-lg">{currentUser.householdId}</p>
+                    </div>
+
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        navigator.clipboard.writeText(currentUser.householdId);
+                        toast({
+                          title: 'Copied',
+                          description: 'Invite code copied to clipboard',
+                        });
+                      }}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {hasBudget ? (
               <>
-                {/* Summary Cards */}
                 <SummaryCards budget={budget} currentUserId={currentUser.id} />
 
-                {/* Budget health */}
                 <div className="card-elevated p-4 space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -175,27 +227,23 @@ export default function Dashboard() {
                       <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-red-700">
-                          Your planned budget exceeds your combined income by{' '}
-                          {formatSek(overBudgetAmount)}.
-                        </p>
-                        <p className="text-sm text-red-600 mt-1">
-                          Consider reducing some categories before the month starts.
+                          Your planned budget exceeds your combined income by {formatSek(overBudgetAmount)}.
                         </p>
                       </div>
                     </div>
                   ) : (
                     <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
                       <p className="text-sm font-medium text-emerald-700">
-                        You still have {formatSek(remainingAmount)} left before reaching your combined income.
+                        You still have {formatSek(remainingAmount)} left.
                       </p>
                     </div>
                   )}
                 </div>
 
-                {/* Split Mode Selector */}
-                <SplitModeSelector split={budget.split} onChange={handleSplitChange} />
+                <div className={isSolo ? 'opacity-50 pointer-events-none' : ''}>
+                  <SplitModeSelector split={budget.split} onChange={handleSplitChange} />
+                </div>
 
-                {/* Categories */}
                 <div>
                   <h3 className="section-title">Budget Categories</h3>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
@@ -210,7 +258,6 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Edit Button */}
                 <div className="pt-2">
                   <Button asChild variant="outline" size="lg" className="w-full">
                     <Link to={`/budget/${month}/edit`}>

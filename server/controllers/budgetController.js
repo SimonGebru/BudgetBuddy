@@ -45,13 +45,14 @@ async function getValidatedHousehold(householdId) {
     };
   }
 
-  if (!household.members || household.members.length < 2) {
+  // Endast 0 members ska vara error
+  if (!household.members || household.members.length === 0) {
     return {
       ok: false,
       status: 400,
       error: {
         error: "ValidationError",
-        message: "At least two household members are required",
+        message: "Household must have at least one member",
       },
     };
   }
@@ -175,19 +176,19 @@ export async function getBudgetSummary(req, res) {
     const { household } = householdResult;
     const totalBudget = getTotalBudget(plan.categories);
 
-    // Räknar ut hur stor del varje person ska stå för beroende på valt split-läge.
     const split = plan.split || getDefaultSplit();
     const peopleWithWeights = calcWeights(split, household.members, month);
+
     const totalIncome = peopleWithWeights.reduce(
       (sum, person) => sum + person.monthlyIncome,
       0
     );
 
-    // Bygger en enklare struktur för totalsumman per person.
     const people = buildPeopleSummary(peopleWithWeights, totalBudget);
-
-    // Räknar även ut fördelning per kategori så att frontend kan visa mer detaljerat vad var och en ska betala.
     const categories = buildCategorySummary(plan.categories, peopleWithWeights);
+
+    
+    const isSolo = household.members.length < 2;
 
     return res.status(200).json({
       householdId: req.user.householdId,
@@ -197,6 +198,7 @@ export async function getBudgetSummary(req, res) {
       totalIncome: roundMoney(totalIncome),
       people,
       categories,
+      isSolo, // 👈 viktig
     });
   } catch (err) {
     return res.status(500).json({
